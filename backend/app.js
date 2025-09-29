@@ -5,10 +5,6 @@ require("dotenv").config();
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Sessions
 app.use(
   session({
@@ -37,6 +33,9 @@ const db = require("./src/config/db");
 // Routes
 const authRoutes = require("./src/routes/authRoutes");
 app.use("/api/auth", authRoutes);
+
+const propertyRoutes = require("./src/routes/propertyRoutes");
+app.use("/api/properties", propertyRoutes);
 
 // Test route
 app.get("/", (req, res) => {
