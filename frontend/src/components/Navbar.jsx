@@ -1,13 +1,76 @@
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { FaGlobe, FaBars } from "react-icons/fa";
 
-export default function Navbar() {
+export default function DashboardNavbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <nav className="p-4 bg-gray-200 flex gap-4">
-      <Link to="/">Home</Link>
-      <Link to="/traveler/signup">Traveler Signup</Link>
-      <Link to="/traveler/login">Traveler Login</Link>
-      <Link to="/owner/signup">Owner Signup</Link>
-      <Link to="/owner/login">Owner Login</Link>
+    <nav className="flex items-center justify-between px-6 py-4 shadow-md bg-rose-500">
+      {/* Left - Logo */}
+      <Link to="/home" className="flex items-center">
+        <img
+          src="/airbnb-logo-white.png"   // put logo in public/
+          alt="Airbnb Logo"
+          className="h-8"
+        />
+      </Link>
+
+      {/* Center - Search bar */}
+      <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 space-x-4">
+        <input
+          type="text"
+          placeholder="Location"
+          className="bg-transparent placeholder-gray-400 text-gray-800 outline-none text-sm"
+        />
+        <input
+          type="date"
+          className="bg-transparent text-gray-800 outline-none text-sm"
+        />
+        <input
+          type="number"
+          placeholder="Guests"
+          className="bg-transparent placeholder-gray-400 text-gray-800 outline-none text-sm w-16"
+        />
+        <button className="bg-rose-500 text-white px-4 py-1 rounded-full text-sm hover:bg-rose-600">
+          Search
+        </button>
+      </div>
+
+      {/* Right - Menu */}
+      <div className="flex items-center space-x-4 relative text-white" ref={menuRef}>
+        <FaGlobe className="text-xl cursor-pointer" />
+        <FaBars
+          className="text-xl cursor-pointer"
+          onClick={() => setMenuOpen(!menuOpen)}
+        />
+        {menuOpen && (
+          <div className="absolute right-0 mt-12 w-48 bg-white shadow-md rounded-md text-black">
+            <ul className="text-sm">
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <Link to="/profile">Profile</Link>
+              </li>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <Link to="/history">Travel History</Link>
+              </li>
+              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <Link to="/login">Logout</Link>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
