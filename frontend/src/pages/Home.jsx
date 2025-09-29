@@ -1,28 +1,46 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Navbar from "../components/Navbar";
+import PropertyCard from "../components/PropertyCard";
 
-export default function Home() {
-  const navigate = useNavigate();
+const Home = () => {
+  const [properties, setProperties] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/properties")
+      .then((res) => {
+        if (res.data.length > 0) {
+          setProperties(res.data);
+        } else {
+          setError("No properties available at the moment.");
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching properties:", err);
+        setError("Unable to load properties. Please try again later.");
+      });
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-rose-500">
-      <div className="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-md text-center">
-        {/* Logo (optional) */}
-        <div className="flex justify-center mb-6">
-          <img src="/airbnb-logo.png" alt="Airbnb Logo" className="w-16" />
-        </div>
+    <div>
+      <Navbar />
+      <div className="p-8">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Explore Homes</h2>
 
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to Airbnb Clone
-        </h1>
-        <p className="text-gray-600 mb-8">Find your next stay, anywhere.</p>
-
-        <button
-          onClick={() => navigate("/login")}
-          className="w-full bg-rose-500 text-white py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-rose-600 transition"
-        >
-          Login
-        </button>
+        {error ? (
+          <p className="text-center text-red-500 font-medium">{error}</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {properties.map((prop) => (
+              <PropertyCard key={prop.id} {...prop} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default Home;
