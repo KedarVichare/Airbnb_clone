@@ -1,22 +1,15 @@
 const pool = require("../config/db");
 
-// Create a new user (Traveler or Owner)
 const createUser = async (user) => {
   const [result] = await pool.query(
     `INSERT INTO users 
-      (name, email, password, role, phone, city, country, language, gender, location) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (name, email, password, role) 
+     VALUES (?, ?, ?, ?)`,
     [
       user.name,
       user.email,
-      user.password, // hashed before calling this function
+      user.password, 
       user.role,
-      user.phone,
-      user.city,
-      user.country,
-      user.language,
-      user.gender,
-      user.location || null, // only for owner
     ]
   );
   return result.insertId; // returns new user's ID

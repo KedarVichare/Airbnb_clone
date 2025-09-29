@@ -1,2 +1,50 @@
-const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
+const express = require("express");
+const session = require("express-session");
+const cors = require("cors");
+require("dotenv").config();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Sessions
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "supersecretkey",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    },
+  })
+);
+
+// CORS (allow React frontend to talk to backend)
+app.use(
+  cors({
+    origin: "http://localhost:5173", // your React app
+    credentials: true,               // allow cookies/sessions
+  })
+);
+
+// DB (if you want to test db connection here, uncomment this)
+const db = require("./src/config/db");
+
+// Routes
+const authRoutes = require("./src/routes/authRoutes");
+app.use("/api/auth", authRoutes);
+
+// Test route
+app.get("/", (req, res) => {
+  res.send("Backend is running properly");
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
