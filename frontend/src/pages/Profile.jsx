@@ -15,6 +15,9 @@ const Profile = () => {
     profilePic: null,
   });
 
+  const countries = ["United States", "Canada", "United Kingdom", "India", "Australia"];
+  const genders = ["Male", "Female", "Other"];
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "profilePic") {
@@ -97,7 +100,7 @@ const Profile = () => {
 
           {/* About */}
           <div>
-            <label className="block font-medium">About</label>
+            <label className="block font-medium">About Me</label>
             <textarea
               name="about"
               value={profile.about}
@@ -106,6 +109,81 @@ const Profile = () => {
             />
           </div>
 
+          {/* City */}
+          <div>
+            <label className="block font-medium">City</label>
+            <input
+              type="text"
+              name="city"
+              value={profile.city}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            />
+          </div>
+
+          {/* State */}
+          <div>
+            <label className="block font-medium">State (Abbreviation)</label>
+            <input
+              type="text"
+              name="state"
+              maxLength="2"
+              placeholder="e.g., CA"
+              value={profile.state}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded uppercase"
+            />
+          </div>
+
+          {/* Country */}
+          <div>
+            <label className="block font-medium">Country</label>
+            <select
+              name="country"
+              value={profile.country}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            >
+              <option value="">Select Country</option>
+              {countries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Languages */}
+          <div>
+            <label className="block font-medium">Languages</label>
+            <input
+              type="text"
+              name="languages"
+              placeholder="e.g., English, Spanish"
+              value={profile.languages}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            />
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block font-medium">Gender</label>
+            <select
+              name="gender"
+              value={profile.gender}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            >
+              {genders.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Save Button */}
           <button
             type="submit"
             className="bg-rose-500 text-white px-6 py-2 rounded hover:bg-rose-600"

@@ -11,15 +11,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = { role, ...formData };
-      try {
-        console.log("LOGIN payload →", payload);
-        const res = await login(role, payload);
-        console.log("Login success:", res.data);
-
-      } catch (err) {
-        console.error("Login failed:", err.response?.data || err.message);
-        setError("Login failed. Please try again.");
-      }
+    
+    try {
+      console.log("LOGIN payload →", payload);
+      const res = await login(role, payload);
+      console.log("Login success:", res.data);
+      setIsLoggedIn(true);
+      navigate("/home");
+    } catch (err) {
+      console.error("Login failed:", err.response?.data || err.message);
+      setError("Login failed. Please try again.");
+    }
   };
 
   return (
