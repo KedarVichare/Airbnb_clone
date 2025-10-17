@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { signup } from "../services/AuthService"; 
 
+
 export default function Signup() {
   const [role, setRole] = useState("traveler"); // traveler | owner
   const [formData, setFormData] = useState({
@@ -34,6 +35,7 @@ export default function Signup() {
         throw new Error("Account already exists. Please log in.");
       }
       alert("Signup successful!");
+      // navigate("/home");
     } catch (err) {
       console.error("Signup failed:", err.response?.data || err.message);
       setError(err.message || "Signup failed");
