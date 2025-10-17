@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs")
 // backend\src\models\usermodels.js
 const signup = async (req, res) => {
   const { name, email, password, role, location } = req.body;
+  console.log("Incoming signup request:", req.originalUrl); 
+  console.log("Request body:", req.body);
 
   const existingUser = await findUserByEmail(email);
   if (existingUser) return res.status(400).json({ message: "User already exists" });

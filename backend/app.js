@@ -31,11 +31,18 @@ app.use(
 const db = require("./src/config/db");
 
 // Routes
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const authRoutes = require("./src/routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
 const propertyRoutes = require("./src/routes/propertyRoutes");
 app.use("/api/properties", propertyRoutes);
+
+const bookingRoutes = require("./src/routes/bookingroutes");
+app.use("/api/bookings", bookingRoutes);
 
 // Test route
 app.get("/", (req, res) => {

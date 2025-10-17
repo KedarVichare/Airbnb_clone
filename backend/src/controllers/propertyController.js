@@ -6,7 +6,7 @@ const {
 } = require("../models/propertymodel");
 
 // Get all properties
-exports.getProperty = async (req, res) => {
+exports.getProperties = async (req, res) => {   // ✅ plural
   try {
     const properties = await getAllProperties();
     res.json(properties);
@@ -29,7 +29,7 @@ exports.searchProperties = async (req, res) => {
 };
 
 // Get property details
-exports.getProperty = async (req, res) => {
+exports.getProperty = async (req, res) => {     // ✅ singular
   try {
     const property = await getPropertyById(req.params.id);
     if (!property) return res.status(404).json({ message: "Property not found" });
@@ -40,10 +40,17 @@ exports.getProperty = async (req, res) => {
   }
 };
 
+// Add property
 exports.addProperty = async (req, res) => {
   try {
     const { title, description, location, price, owner_id } = req.body;
-    const newId = await createProperty({ title, description, location, price, owner_id });
+    const newId = await createProperty({
+      title,
+      description,
+      location,
+      price,
+      owner_id,
+    });
     res.status(201).json({ message: "Property created", propertyId: newId });
   } catch (err) {
     console.error(err);

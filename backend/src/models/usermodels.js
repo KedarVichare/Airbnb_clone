@@ -10,6 +10,7 @@ const createUser = async (user) => {
       user.email,
       user.password, 
       user.role,
+      user.location || null,
     ]
   );
   return result.insertId; // returns new user's ID

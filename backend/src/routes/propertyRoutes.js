@@ -3,6 +3,7 @@ const {
   getProperties,
   searchProperties,
   getProperty,
+  addProperty,
 } = require("../controllers/propertyController");
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.get("/search", searchProperties);
 
 // View one property
 router.get("/:id", getProperty);
+
+router.post("/", addProperty);
 
 module.exports = router;
