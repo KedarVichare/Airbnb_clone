@@ -42,32 +42,46 @@ const PropertyDetail = () => {
     );
   }
 
+  // ✅ Fallback image if no photo_url in database
+  const imageSrc = property.photo_url
+    ? property.photo_url
+    : `https://source.unsplash.com/800x600/?${property.title},${property.location}`;
+
   return (
     <div>
       <Navbar />
       <div className="p-6 max-w-4xl mx-auto">
-        {property.photo_url ? (
-          <img
-            src={property.photo_url}
-            alt={property.title}
-            className="w-full h-80 object-cover rounded-lg"
-          />
-        ) : (
-          <div className="w-full h-80 flex items-center justify-center bg-gray-200 text-gray-500 rounded-lg">
-            No Image Available
-          </div>
-        )}
+        <img
+          src={imageSrc}
+          alt={property.title}
+          className="w-full h-80 object-cover rounded-lg"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "https://picsum.photos/800/600?grayscale";
+          }}
+        />
 
         <h2 className="text-3xl font-bold mt-4">{property.title}</h2>
         <p className="text-gray-600">{property.location}</p>
         <p className="mt-2">{property.description}</p>
 
         <div className="mt-4 grid grid-cols-2 gap-4">
-          <p><strong>Type:</strong> {property.type}</p>
-          <p><strong>Bedrooms:</strong> {property.bedrooms}</p>
-          <p><strong>Bathrooms:</strong> {property.bathrooms}</p>
-          <p><strong>Price:</strong> ${property.price} / night</p>
-          <p><strong>Available:</strong> {property.available_from} → {property.available_to}</p>
+          <p>
+            <strong>Type:</strong> {property.type || "N/A"}
+          </p>
+          <p>
+            <strong>Bedrooms:</strong> {property.bedrooms || "N/A"}
+          </p>
+          <p>
+            <strong>Bathrooms:</strong> {property.bathrooms || "N/A"}
+          </p>
+          <p>
+            <strong>Price:</strong> ${property.price} / night
+          </p>
+          <p>
+            <strong>Available:</strong>{" "}
+            {property.available_from || "?"} → {property.available_to || "?"}
+          </p>
         </div>
 
         {property.amenities && (

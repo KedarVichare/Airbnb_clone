@@ -3,7 +3,7 @@ import axios from "axios";
 
 // create a pre-configured axios instance
 const API = axios.create({
-  baseURL: "http://localhost:5050/api/auth", // your backend URL
+  baseURL: "http://localhost:5000/api/auth", // your backend URL
   withCredentials: true, // if you are using cookies/sessions
 });
 
