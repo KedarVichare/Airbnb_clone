@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { login } from "../services/AuthService"; 
+import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Login({setIsLoggedIn}) {
   const [role, setRole] = useState("traveler");
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const navigate = useNavigate(); 
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = { role, ...formData };
-    
+
     try {
       console.log("LOGIN payload →", payload);
       const res = await login(role, payload);
       console.log("Login success:", res.data);
-      setIsLoggedIn(true);
-      navigate("/home");
+
+      setIsLoggedIn(true);  
+      navigate("/home");    
     } catch (err) {
       console.error("Login failed:", err.response?.data || err.message);
       setError("Login failed. Please try again.");
@@ -69,3 +72,4 @@ export default function Login() {
     </div>
   );
 }
+
