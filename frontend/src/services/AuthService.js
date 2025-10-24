@@ -1,14 +1,19 @@
-// src/services/authService.js
 import axios from "axios";
 
-// create a pre-configured axios instance
-const API = axios.create({
-  baseURL: "http://localhost:5000/api/auth", // your backend URL
-  withCredentials: true, // if you are using cookies/sessions
-});
+const AUTH_API_URL = "http://localhost:5000/api/auth";
 
-// Traveler or Owner signup
-export const signup = (role, data) => API.post(`/${role}/signup`, data);
+class AuthService {
+  async login(role, payload) {
+    return axios.post(`${AUTH_API_URL}/${role}/login`, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-// Traveler or Owner login
-export const login = (role, data) => API.post(`/${role}/login`, data);
+  async signup(role, payload) {
+    return axios.post(`${AUTH_API_URL}/${role}/signup`, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+export default new AuthService();
