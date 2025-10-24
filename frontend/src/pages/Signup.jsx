@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signup } from "../services/AuthService"; 
+import AuthService from "../services/AuthService"; 
 
 
 export default function Signup() {
@@ -27,7 +27,7 @@ export default function Signup() {
     try {
       // TODO: connect with backend
       console.log("SIGNUP payload →", payload);
-      const res = await signup(role, payload);
+      const res = await AuthService.Signup(role, payload);
       console.log("Signup success:", res.data);
 
       // fake check for demo

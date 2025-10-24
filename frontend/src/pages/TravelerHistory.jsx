@@ -1,7 +1,6 @@
 import Navbar from "../components/Navbar";
 
 const TravelerHistory = () => {
-  // Example trip history data
   const history = [
     {
       id: 1,

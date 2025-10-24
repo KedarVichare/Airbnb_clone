@@ -44,6 +44,11 @@ app.use("/api/properties", propertyRoutes);
 const bookingRoutes = require("./src/routes/bookingroutes");
 app.use("/api/bookings", bookingRoutes);
 
+const userRoutes = require("./src/routes/userRoutes");
+
+app.use(express.json());
+app.use("/api/users", userRoutes);
+
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running properly");

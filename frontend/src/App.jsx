@@ -11,8 +11,19 @@ import Favourites from "./pages/Favourites";
 import TravelerHistory from "./pages/TravelerHistory";
 
 function App() {
-  // Temporary auth state (can be replaced by JWT/localStorage check)
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem("isLoggedIn", "true");
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem("isLoggedIn");
+  };
 
   return (
     <Router>
@@ -21,7 +32,11 @@ function App() {
         <Route
           path="/login"
           element={
-            isLoggedIn ? <Navigate to="/home" replace /> : <Login setIsLoggedIn={setIsLoggedIn} />
+            isLoggedIn ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
           }
         />
         <Route
@@ -34,27 +49,27 @@ function App() {
         {/* Protected Routes */}
         <Route
           path="/"
-          element={isLoggedIn ? <Home /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Home onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/home"
-          element={isLoggedIn ? <Home /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Home onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/profile"
-          element={isLoggedIn ? <Profile /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Profile onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/favourites"
-          element={isLoggedIn ? <Favourites /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Favourites onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/history"
-          element={isLoggedIn ? <TravelerHistory /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <TravelerHistory onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/property/:id"
-          element={isLoggedIn ? <PropertyDetail /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <PropertyDetail onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </Router>

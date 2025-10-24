@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import PropertyCard from "../components/PropertyCard";
+import { AIConciergeButton, AIConciergePanel } from "../components/AIConcierge";
+import ConciergeResults from "../components/ConciergeResults";
+import AIConciergeService from "../services/AIConciergeService";
 
 const Home = () => {
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState("");
+  const [isConciergeOpen, setIsConciergeOpen] = useState(false);
+  const [conciergeResults, setConciergeResults] = useState(null);
+  const [conciergeError, setConciergeError] = useState("");
 
   useEffect(() => {
     axios
@@ -23,6 +29,27 @@ const Home = () => {
       });
   }, []);
 
+  const handleConciergeSubmit = async (formData) => {
+    try {
+      setConciergeError("");
+      const results = await AIConciergeService.getRecommendations(formData);
+      setConciergeResults(results);
+      setIsConciergeOpen(false);
+    } catch (error) {
+      setConciergeError(error.message);
+      console.error("Concierge error:", error);
+    }
+  };
+
+  const handleCloseConcierge = () => {
+    setIsConciergeOpen(false);
+    setConciergeError("");
+  };
+
+  const handleCloseResults = () => {
+    setConciergeResults(null);
+  };
+
   return (
     <div>
       <Navbar />
@@ -39,6 +66,38 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* AI Concierge Button */}
+      <AIConciergeButton onClick={() => setIsConciergeOpen(true)} />
+
+      {/* AI Concierge Panel */}
+      <AIConciergePanel
+        isOpen={isConciergeOpen}
+        onClose={handleCloseConcierge}
+        onSubmit={handleConciergeSubmit}
+      />
+
+      {/* Concierge Results */}
+      <ConciergeResults
+        results={conciergeResults}
+        onClose={handleCloseResults}
+      />
+
+      {/* Error Display */}
+      {conciergeError && (
+        <div className="fixed bottom-4 left-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
+          <div className="flex items-center">
+            <span className="font-medium">Error:</span>
+            <span className="ml-2">{conciergeError}</span>
+            <button
+              onClick={() => setConciergeError("")}
+              className="ml-4 text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
