@@ -1,10 +1,12 @@
 import Navbar from "../components/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "johndoe@email.com",
+    name: "",
+    email: "",
     phone: "",
     about: "",
     city: "",
@@ -15,21 +17,51 @@ const Profile = () => {
     profilePic: null,
   });
 
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+
   const countries = ["United States", "Canada", "United Kingdom", "India", "Australia"];
   const genders = ["Male", "Female", "Other"];
 
+  // ✅ Load current profile info when component mounts
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/users/me", { withCredentials: true })
+      .then((res) => {
+        if (res.data) setProfile(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch profile:", err);
+      });
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "profilePic") {
-      setProfile({ ...profile, profilePic: URL.createObjectURL(files[0]) });
+    if (name === "profilePic" && files && files[0]) {
+      setProfile({ ...profile, profilePic: files[0] });
     } else {
       setProfile({ ...profile, [name]: value });
     }
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Save profile to backend
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Updated Profile:", profile);
+    try {
+      await axios.put(
+        "http://localhost:5000/api/users/update",
+        profile,
+        { withCredentials: true }
+      );
+  
+      setMessage("Profile updated successfully!");
+  
+      // ✅ Redirect to home page after 1 second
+      setTimeout(() => navigate("/home"), 1000);
+    } catch (err) {
+      console.error("Profile update failed:", err);
+      setMessage("Error updating profile.");
+    }
   };
 
   return (
@@ -40,12 +72,17 @@ const Profile = () => {
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 rounded-lg shadow-md space-y-4"
+          encType="multipart/form-data"
         >
           {/* Profile Pic */}
           <div className="flex flex-col items-center">
             {profile.profilePic ? (
               <img
-                src={profile.profilePic}
+                src={
+                  typeof profile.profilePic === "string"
+                    ? profile.profilePic
+                    : URL.createObjectURL(profile.profilePic)
+                }
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover mb-2"
               />
@@ -190,6 +227,10 @@ const Profile = () => {
           >
             Save Changes
           </button>
+
+          {message && (
+            <p className="text-center text-green-600 mt-3">{message}</p>
+          )}
         </form>
       </div>
     </div>

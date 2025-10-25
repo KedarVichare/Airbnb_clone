@@ -1,6 +1,6 @@
 import { useState } from "react";
-import AuthService from "../services/AuthService"; 
-
+import AuthService from "../services/AuthService";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const [role, setRole] = useState("traveler"); // traveler | owner
@@ -8,46 +8,59 @@ export default function Signup() {
     name: "",
     email: "",
     password: "",
-    location: ""   // only used if role = owner
+    location: "", // only for owner
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    setFormData((s) => ({ ...s, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload =
       role === "owner"
-        ? { role, name: formData.name, email: formData.email, password: formData.password, location: formData.location }
-        : { role, name: formData.name, email: formData.email, password: formData.password };
+        ? {
+            role,
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            location: formData.location,
+          }
+        : {
+            role,
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          };
 
     try {
-      // TODO: connect with backend
       console.log("SIGNUP payload →", payload);
-      const res = await AuthService.Signup(role, payload);
+      // ✅ lowercase function name
+      const res = await AuthService.signup(role, payload);
       console.log("Signup success:", res.data);
 
-      // fake check for demo
-      if (formData.email === "test@example.com") {
-        throw new Error("Account already exists. Please log in.");
-      }
       alert("Signup successful!");
-      // navigate("/home");
+      // optional: auto-login or redirect
+      navigate("/login");
     } catch (err) {
       console.error("Signup failed:", err.response?.data || err.message);
-      setError(err.message || "Signup failed");
+      setError(
+        err.response?.data?.message || err.message || "Signup failed. Please try again."
+      );
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-rose-500 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-400 to-rose-600 p-6">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-                <div className="flex justify-center mb-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
           <img src="/airbnb-logo.png" alt="Airbnb Logo" className="w-16" />
         </div>
+
         <h2 className="text-3xl font-bold text-center mb-6">Sign Up</h2>
 
         {/* Role toggle */}
@@ -55,19 +68,24 @@ export default function Signup() {
           <button
             type="button"
             onClick={() => setRole("traveler")}
-            className={`px-4 py-2 rounded-lg ${role === "traveler" ? "bg-rose-500 text-white" : "bg-gray-200"}`}
+            className={`px-4 py-2 rounded-lg ${
+              role === "traveler" ? "bg-rose-500 text-white" : "bg-gray-200"
+            }`}
           >
             Traveler
           </button>
           <button
             type="button"
             onClick={() => setRole("owner")}
-            className={`px-4 py-2 rounded-lg ${role === "owner" ? "bg-rose-500 text-white" : "bg-gray-200"}`}
+            className={`px-4 py-2 rounded-lg ${
+              role === "owner" ? "bg-rose-500 text-white" : "bg-gray-200"
+            }`}
           >
             Owner
           </button>
         </div>
 
+        {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             name="name"
@@ -101,7 +119,7 @@ export default function Signup() {
               name="location"
               value={formData.location}
               onChange={onChange}
-              placeholder="Location"
+              placeholder="Business Location"
               className="w-full p-3 border rounded-lg"
               required
             />
@@ -111,7 +129,7 @@ export default function Signup() {
 
           <button
             type="submit"
-            className="w-full bg-rose-500 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-rose-500 text-white py-3 rounded-lg hover:bg-rose-600 transition"
           >
             Sign Up
           </button>
@@ -119,7 +137,10 @@ export default function Signup() {
 
         <p className="text-center text-gray-600 mt-6">
           Already have an account?{" "}
-          <a href={`/login?role=${role}`} className="text-rose-500 font-semibold hover:underline">
+          <a
+            href={`/login?role=${role}`}
+            className="text-rose-500 font-semibold hover:underline"
+          >
             Login here
           </a>
         </p>

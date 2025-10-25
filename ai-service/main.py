@@ -8,8 +8,9 @@ import httpx
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+load_dotenv(dotenv_path="../backend/.env")
+
+YELP_API_KEY = os.getenv("YELP_API_KEY")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -142,6 +143,45 @@ MOCK_RESTAURANTS = {
     ]
 }
 
+async def get_restaurants_from_yelp(location: str, dietary_filters: list[str], limit: int = 5):
+    """Fetch real restaurants dynamically from Yelp API"""
+    if not YELP_API_KEY:
+        print("⚠️  Yelp API key missing in .env")
+        return []
+
+    term = "restaurants"
+    if dietary_filters:
+        term += " " + " ".join(dietary_filters)  # e.g., "restaurants vegan gluten-free"
+
+    url = "https://api.yelp.com/v3/businesses/search"
+    headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
+    params = {
+        "term": term,
+        "location": location,
+        "limit": limit,
+        "sort_by": "rating"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            restaurants = []
+            for r in data.get("businesses", []):
+                restaurants.append({
+                    "name": r.get("name"),
+                    "address": " ".join(r.get("location", {}).get("display_address", [])),
+                    "cuisine_type": ", ".join(r.get("categories", [{}])[0].get("title", "")),
+                    "price_tier": r.get("price", "?"),
+                    "dietary_accommodations": dietary_filters,
+                    "rating": r.get("rating", 0.0)
+                })
+            return restaurants
+    except Exception as e:
+        print("❌ Yelp API error:", e)
+        return []
 
 # -----------------------------
 # Tavily Web Search Integration
@@ -293,13 +333,11 @@ async def ai_concierge_agent(request: ConciergeRequest):
         all_activities = [a for plan in day_plans for a in (plan.morning + plan.afternoon + plan.evening)]
 
         # Filter restaurants
-        restaurants = MOCK_RESTAURANTS.get(request.booking_context.location, [])
-        restaurant_recs = [
-            RestaurantRecommendation(**r)
-            for r in restaurants
-            if not request.preferences.dietary_filters
-            or any(d in r["dietary_accommodations"] for d in request.preferences.dietary_filters)
-        ]
+        restaurants = await get_restaurants_from_yelp(
+            request.booking_context.location,
+            request.preferences.dietary_filters
+        )
+        restaurant_recs = [RestaurantRecommendation(**r) for r in restaurants]
 
         packing_checklist = generate_packing_checklist(weather_info, request.preferences)
 

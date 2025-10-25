@@ -16,11 +16,13 @@ export default function Login({ onLogin }) {
 
     try {
       console.log("LOGIN payload →", payload);
-      const res = await AuthService.login(role, payload);
-      console.log("Login success:", res.data);
 
-      onLogin();              // sets state + localStorage
-      navigate("/home");      // redirect to hom e
+      // ✅ Ensure cookies (session) are sent and saved
+      const res = await AuthService.login(role, payload, { withCredentials: true });
+
+      console.log("Login success:", res.data);
+      onLogin();
+      navigate("/home");
     } catch (err) {
       console.error("Login failed:", err.response?.data || err.message);
       setError("Login failed. Please try again.");
@@ -40,14 +42,18 @@ export default function Login({ onLogin }) {
           <button
             type="button"
             onClick={() => setRole("traveler")}
-            className={`px-4 py-2 rounded-lg ${role === "traveler" ? "bg-rose-500 text-white" : "bg-gray-200"}`}
+            className={`px-4 py-2 rounded-lg ${
+              role === "traveler" ? "bg-rose-500 text-white" : "bg-gray-200"
+            }`}
           >
             Traveler
           </button>
           <button
             type="button"
             onClick={() => setRole("owner")}
-            className={`px-4 py-2 rounded-lg ${role === "owner" ? "bg-rose-500 text-white" : "bg-gray-200"}`}
+            className={`px-4 py-2 rounded-lg ${
+              role === "owner" ? "bg-rose-500 text-white" : "bg-gray-200"
+            }`}
           >
             Owner
           </button>

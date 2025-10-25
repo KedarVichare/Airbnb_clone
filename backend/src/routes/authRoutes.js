@@ -1,17 +1,18 @@
 const express = require("express");
-const { signup, login, logout } = require("../controllers/authController");
-
 const router = express.Router();
 
-// Traveler routes
-router.post("/traveler/signup", signup);
-router.post("/traveler/login", login);
+// ✅ Make sure ALL four functions are imported
+const {
+  signup,
+  login,
+  logout,
+  checkSession,
+} = require("../controllers/authController");
 
-// Owner routes
-router.post("/owner/signup", signup);
-router.post("/owner/login", login);
-
-// Common
+// Auth routes
+router.post("/:role/signup", signup);
+router.post("/:role/login", login);
 router.post("/logout", logout);
+router.get("/check-session", checkSession); // ✅ Now this will work
 
 module.exports = router;

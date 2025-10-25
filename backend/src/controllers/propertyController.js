@@ -4,6 +4,101 @@ const {
   filterProperties,
   getPropertyById,
 } = require("../models/propertymodel");
+const db = require("../config/db");
+
+// list properties for the current owner
+exports.getMyProperties = async (req, res) => {
+  try {
+    const ownerId = req.session.user?.id;
+    if (!ownerId || req.session.user?.role !== "owner") {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const [rows] = await db.query(
+      `SELECT id, title, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url
+         FROM properties WHERE owner_id = ? ORDER BY created_at DESC`,
+      [ownerId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("getMyProperties error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// create property (owner only)
+exports.createMyProperty = async (req, res) => {
+  try {
+    const ownerId = req.session.user?.id;
+    if (!ownerId || req.session.user?.role !== "owner") {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const {
+      title, description, location, price,
+      amenities, bedrooms, bathrooms, available_from, available_to, photo_url
+    } = req.body;
+
+    const [result] = await db.query(
+      `INSERT INTO properties
+         (owner_id, title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [ownerId, title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url]
+    );
+    res.status(201).json({ message: "Property created", id: result.insertId });
+  } catch (err) {
+    console.error("createMyProperty error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// update property if I own it
+exports.updateMyProperty = async (req, res) => {
+  try {
+    const ownerId = req.session.user?.id;
+    if (!ownerId || req.session.user?.role !== "owner") {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const { id } = req.params;
+    // ownership check + update
+    const [check] = await db.query(`SELECT id FROM properties WHERE id = ? AND owner_id = ?`, [id, ownerId]);
+    if (check.length === 0) return res.status(403).json({ message: "You don't own this property" });
+
+    const {
+      title, description, location, price,
+      amenities, bedrooms, bathrooms, available_from, available_to, photo_url
+    } = req.body;
+
+    await db.query(
+      `UPDATE properties
+          SET title=?, description=?, location=?, price=?, amenities=?, bedrooms=?, bathrooms=?, available_from=?, available_to=?, photo_url=?
+        WHERE id=?`,
+      [title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url, id]
+    );
+    res.json({ message: "Property updated" });
+  } catch (err) {
+    console.error("updateMyProperty error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// delete property if I own it
+exports.deleteMyProperty = async (req, res) => {
+  try {
+    const ownerId = req.session.user?.id;
+    if (!ownerId || req.session.user?.role !== "owner") {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const { id } = req.params;
+    const [check] = await db.query(`SELECT id FROM properties WHERE id = ? AND owner_id = ?`, [id, ownerId]);
+    if (check.length === 0) return res.status(403).json({ message: "You don't own this property" });
+
+    await db.query(`DELETE FROM properties WHERE id = ?`, [id]);
+    res.json({ message: "Property deleted" });
+  } catch (err) {
+    console.error("deleteMyProperty error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 // Get all properties
 exports.getProperties = async (req, res) => {   // ✅ plural

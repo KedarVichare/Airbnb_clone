@@ -1,50 +1,88 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Navbar from "../components/Navbar";
 
 const TravelerHistory = () => {
-  const history = [
-    {
-      id: 1,
-      property: "Ocean View Apartment",
-      location: "Miami, Florida",
-      date: "June 12 - June 15, 2024",
-      price: "$600 total",
-      image:
-        "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800",
-    },
-    {
-      id: 2,
-      property: "Cozy Cottage",
-      location: "Napa Valley, California",
-      date: "August 20 - August 23, 2024",
-      price: "$450 total",
-      image:
-        "https://images.unsplash.com/photo-1572120360610-d971b9c79809?w=800",
-    },
-  ];
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        // ✅ Replace this with the logged-in traveler's ID (from session/localStorage)
+        const travelerId = localStorage.getItem("traveler_id") || 37;
+
+        const res = await axios.get(
+          `http://localhost:5000/api/bookings/traveler/${travelerId}`,
+          { withCredentials: true }
+        );
+
+        setBookings(res.data);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setError("Could not load your booking history.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
 
   return (
     <div>
       <Navbar />
       <div className="p-6 max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Traveler History</h2>
+        <h2 className="text-2xl font-bold mb-4">My Bookings</h2>
 
-        {history.length > 0 ? (
+        {loading ? (
+          <p className="text-gray-500">Loading your bookings...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : bookings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {history.map((trip) => (
+            {bookings.map((booking) => (
               <div
-                key={trip.id}
+                key={booking.id}
                 className="border rounded-lg shadow hover:shadow-lg transition duration-200 bg-white"
               >
                 <img
-                  src={trip.image}
-                  alt={trip.property}
+                  src={
+                    booking.photo_url ||
+                    "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800"
+                  }
+                  alt={booking.title}
                   className="w-full h-48 object-cover rounded-t-lg"
                 />
                 <div className="p-4 space-y-1">
-                  <h3 className="font-semibold text-lg">{trip.property}</h3>
-                  <p className="text-gray-600 text-sm">{trip.location}</p>
-                  <p className="text-gray-500 text-sm">{trip.date}</p>
-                  <p className="text-rose-500 font-medium">{trip.price}</p>
+                  <h3 className="font-semibold text-lg">
+                    {booking.title || "Property"}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {booking.city || booking.location || ""}
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    {booking.start_date} → {booking.end_date}
+                  </p>
+                  <p className="text-gray-700 text-sm">
+                    Guests: {booking.guests}
+                  </p>
+
+                  <p className="text-sm">
+                    Status:{" "}
+                    <span
+                      className={`font-semibold ${
+                        booking.status === "ACCEPTED"
+                          ? "text-green-600"
+                          : booking.status === "CANCELLED"
+                          ? "text-red-600"
+                          : "text-yellow-500"
+                      }`}
+                    >
+                      {booking.status}
+                    </span>
+                  </p>
                 </div>
               </div>
             ))}

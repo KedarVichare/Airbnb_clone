@@ -1,8 +1,60 @@
 import { Link } from "react-router-dom";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const PropertyCard = ({ id, title, location, price, photo_url }) => {
+  const [isFavourite, setIsFavourite] = useState(false);
+
+  // ✅ Check if this property is already in favourites when card loads
+  useEffect(() => {
+    const fetchFavourites = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/favourites/my-favourites", {
+          withCredentials: true,
+        });
+        const favourites = res.data || [];
+        const alreadyFav = favourites.some((fav) => fav.id === id);
+        setIsFavourite(alreadyFav);
+      } catch (err) {
+        console.error("Error loading favourites:", err);
+      }
+    };
+    fetchFavourites();
+  }, [id]);
+
+  // ✅ Toggle favourite (add/remove)
+  const toggleFavourite = async () => {
+    try {
+      if (isFavourite) {
+        await axios.delete(`http://localhost:5000/api/favourites/remove/${id}`, {
+          withCredentials: true,
+        });
+        setIsFavourite(false);
+      } else {
+        await axios.post(
+          "http://localhost:5000/api/favourites/add",
+          { propertyId: id },
+          { withCredentials: true }
+        );
+        setIsFavourite(true);
+      }
+    } catch (err) {
+      console.error("Error toggling favourite:", err);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer">
+    <div className="relative bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer">
+      {/* ❤️ Favourite Icon */}
+      <button
+        onClick={toggleFavourite}
+        className="absolute top-3 right-3 text-rose-500 hover:scale-110 transition-transform z-10"
+      >
+        {isFavourite ? <FaHeart size={22} /> : <FaRegHeart size={22} />}
+      </button>
+
+      {/* Property Image */}
       {photo_url ? (
         <img
           src={photo_url}
@@ -16,6 +68,7 @@ const PropertyCard = ({ id, title, location, price, photo_url }) => {
         </div>
       )}
 
+      {/* Property Details */}
       <div className="p-3">
         <h3 className="font-semibold text-md text-gray-800 truncate">{title}</h3>
         <p className="text-gray-500 text-sm truncate">{location}</p>
