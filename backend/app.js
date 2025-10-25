@@ -2,10 +2,24 @@ const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path");
 
 const app = express();
 
-// Sessions
+// ✅ Middleware for JSON and URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ CORS (allow React frontend to talk to backend)
+app.use(
+  cors({
+    origin: "http://localhost:5173", // your Vite frontend
+    credentials: true, // allow sending cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+
+// ✅ Sessions (must come AFTER cors)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "supersecretkey",
@@ -13,49 +27,42 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: false, // ✅ must be false for local HTTP
+      sameSite: "lax", // ✅ important for cross-port session sharing
+      maxAge: 1000 * 60 * 60 * 2, // optional: 2 hours
     },
   })
 );
 
-// CORS (allow React frontend to talk to backend)
-app.use(
-  cors({
-    origin: "http://localhost:5173", // your React app
-    credentials: true,               // allow cookies/sessions
-  })
-);
-
-// DB (if you want to test db connection here, uncomment this)
+// ✅ Database connection
 const db = require("./src/config/db");
 
-// Routes
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+// ✅ Routes
 const authRoutes = require("./src/routes/authRoutes");
-app.use("/api/auth", authRoutes);
-
 const propertyRoutes = require("./src/routes/propertyRoutes");
-app.use("/api/properties", propertyRoutes);
-
 const bookingRoutes = require("./src/routes/bookingroutes");
-app.use("/api/bookings", bookingRoutes);
-
 const userRoutes = require("./src/routes/userRoutes");
+const favouritesRoutes = require("./src/routes/favouritesRoutes");
 
-app.use(express.json());
-app.use("/api/users", userRoutes);
+// ✅ Mount routes
+app.use("/api/auth", authRoutes);
+app.use("/api/properties", propertyRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/favourites", favouritesRoutes);
 
-// Test route
+
+// ✅ Health check
 app.get("/", (req, res) => {
-  res.send("Backend is running properly");
+  res.send("Backend is running properly 🚀");
 });
 
-// Start server
+// ✅ Serve uploads folder if you ever use images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
+
+module.exports = app;

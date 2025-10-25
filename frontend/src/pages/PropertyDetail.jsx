@@ -2,11 +2,13 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import BookingModal from "./BookingModal";
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false); // ✅ MOVED INSIDE COMPONENT
 
   useEffect(() => {
     axios
@@ -47,6 +49,21 @@ const PropertyDetail = () => {
     ? property.photo_url
     : `https://source.unsplash.com/800x600/?${property.title},${property.location}`;
 
+  // ✅ Format available_from and available_to dates
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <div>
       <Navbar />
@@ -80,7 +97,7 @@ const PropertyDetail = () => {
           </p>
           <p>
             <strong>Available:</strong>{" "}
-            {property.available_from || "?"} → {property.available_to || "?"}
+            {formatDate(property.available_from)} → {formatDate(property.available_to)}
           </p>
         </div>
 
@@ -100,9 +117,19 @@ const PropertyDetail = () => {
           </div>
         )}
 
-        <button className="mt-6 bg-rose-500 text-white px-6 py-2 rounded hover:bg-rose-600">
+        <button
+          onClick={() => setShowModal(true)}
+          className="mt-6 bg-rose-500 text-white px-6 py-2 rounded hover:bg-rose-600"
+        >
           Book Now
         </button>
+
+        {showModal && (
+          <BookingModal
+            propertyId={property.id}
+            onClose={() => setShowModal(false)}
+          />
+        )}
       </div>
     </div>
   );

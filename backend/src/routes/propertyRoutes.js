@@ -1,22 +1,25 @@
 const express = require("express");
+const router = express.Router();
 const {
   getProperties,
   searchProperties,
   getProperty,
-  addProperty,
+  getMyProperties,
+  createMyProperty,
+  updateMyProperty,
+  deleteMyProperty,
 } = require("../controllers/propertyController");
+const { ensureOwner } = require("../middlewares/authmiddleware");
 
-const router = express.Router();
-
-// Traveler dashboard → list all properties
+// Traveler routes
 router.get("/", getProperties);
-
-// Traveler search/filter → /api/properties/search?location=NYC&startDate=2025-09-28&endDate=2025-10-05
 router.get("/search", searchProperties);
-
-// View one property
 router.get("/:id", getProperty);
 
-router.post("/", addProperty);
+// Owner routes (protected)
+router.get("/owner/me", ensureOwner, getMyProperties);
+router.post("/owner", ensureOwner, createMyProperty);
+router.put("/owner/:id", ensureOwner, updateMyProperty);
+router.delete("/owner/:id", ensureOwner, deleteMyProperty);
 
 module.exports = router;

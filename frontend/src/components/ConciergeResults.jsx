@@ -10,7 +10,7 @@ import {
   FiUmbrella,
   FiCheck
 } from 'react-icons/fi';
-
+import { FaBaby } from 'react-icons/fa';
 import { FaWheelchair } from 'react-icons/fa';
 import React, { useState } from "react";
 const ConciergeResults = ({ results, onClose }) => {
@@ -212,7 +212,7 @@ const ConciergeResults = ({ results, onClose }) => {
                       )}
                       {activity.child_friendly && (
                         <div className="flex items-center text-blue-600 text-sm">
-                          <FiBaby className="mr-1" />
+                          <FaBaby className="mr-1" />
                           Child Friendly
                         </div>
                       )}

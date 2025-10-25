@@ -1,40 +1,44 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db"); // <-- your DB connection
+const db = require("../config/db");
 
-// ✅ GET user profile by ID
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  const sql = "SELECT * FROM users WHERE id = ?";
-  db.query(sql, [id], (err, results) => {
-    if (err) {
-      console.error("Error fetching user:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
-    if (results.length === 0) {
+// ✅ Get current logged-in user's profile (Promise-based)
+router.get("/me", async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    if (!userId) return res.status(401).json({ message: "Not logged in" });
+
+    const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [userId]);
+    if (rows.length === 0)
       return res.status(404).json({ message: "User not found" });
-    }
-    res.json(results[0]);
-  });
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
-// ✅ UPDATE user profile
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { name, email, phone, about, city, state, country, languages, gender } = req.body;
+// ✅ Update logged-in user's profile (Promise-based)
+router.put("/update", async (req, res) => {
+  try {
+    const userId = req.session.user?.id;
+    if (!userId) return res.status(401).json({ message: "Not logged in" });
 
-  const sql = `
-    UPDATE users 
-    SET name=?, email=?, phone=?, about=?, city=?, state=?, country=?, languages=?, gender=? 
-    WHERE id=?;
-  `;
-  db.query(sql, [name, email, phone, about, city, state, country, languages, gender, id], (err, result) => {
-    if (err) {
-      console.error("Error updating user:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+    const { name, email, phone, about, city, state, country, languages, gender } = req.body;
+
+    await db.query(
+      `UPDATE users 
+       SET name=?, email=?, phone=?, about=?, city=?, state=?, country=?, languages=?, gender=? 
+       WHERE id=?`,
+      [name, email, phone, about, city, state, country, languages, gender, userId]
+    );
+
     res.json({ message: "Profile updated successfully" });
-  });
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 module.exports = router;

@@ -20,14 +20,28 @@ const getAllProperties = async () => {
 
 // Filter properties by location and date
 const filterProperties = async (location, startDate, endDate) => {
-  const [rows] = await db.query(
-    `SELECT * FROM properties
-     WHERE location = ? 
-       AND available_from <= ? 
-       AND available_to >= ?`,
-    [location, startDate, endDate]
-  );
-  return rows;
+  try {
+    let query = "SELECT * FROM properties WHERE 1=1";
+    const params = [];
+
+    // 🏙️ Case-insensitive partial match on location or title
+    if (location && location.trim() !== "") {
+      query += " AND (LOWER(location) LIKE LOWER(?) OR LOWER(title) LIKE LOWER(?))";
+      params.push(`%${location}%`, `%${location}%`);
+    }
+
+    // 📅 Optional: Only filter by date if both start and end provided
+    if (startDate && endDate) {
+      query += " AND available_from <= ? AND available_to >= ?";
+      params.push(startDate, endDate);
+    }
+
+    const [rows] = await db.query(query, params);
+    return rows;
+  } catch (err) {
+    console.error("Error filtering properties:", err);
+    throw err;
+  }
 };
 
 // Get a property by ID (for property details page)
