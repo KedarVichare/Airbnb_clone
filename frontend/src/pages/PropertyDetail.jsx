@@ -1,3 +1,4 @@
+// frontend/src/pages/PropertyDetail.jsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -8,17 +9,14 @@ const PropertyDetail = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false); // ✅ MOVED INSIDE COMPONENT
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/properties/${id}`)
+      .get(`http://localhost:5000/api/properties/${id}`, { withCredentials: true })
       .then((res) => {
-        if (res.data) {
-          setProperty(res.data);
-        } else {
-          setError("Property not found.");
-        }
+        if (res.data) setProperty(res.data);
+        else setError("Property not found.");
       })
       .catch((err) => {
         console.error("Error fetching property:", err);
@@ -44,12 +42,10 @@ const PropertyDetail = () => {
     );
   }
 
-  // ✅ Fallback image if no photo_url in database
   const imageSrc = property.photo_url
     ? property.photo_url
     : `https://source.unsplash.com/800x600/?${property.title},${property.location}`;
 
-  // ✅ Format available_from and available_to dates
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -83,21 +79,12 @@ const PropertyDetail = () => {
         <p className="mt-2">{property.description}</p>
 
         <div className="mt-4 grid grid-cols-2 gap-4">
+          <p><strong>Type:</strong> {property.type || "N/A"}</p>
+          <p><strong>Bedrooms:</strong> {property.bedrooms || "N/A"}</p>
+          <p><strong>Bathrooms:</strong> {property.bathrooms || "N/A"}</p>
+          <p><strong>Price:</strong> ${property.price} / night</p>
           <p>
-            <strong>Type:</strong> {property.type || "N/A"}
-          </p>
-          <p>
-            <strong>Bedrooms:</strong> {property.bedrooms || "N/A"}
-          </p>
-          <p>
-            <strong>Bathrooms:</strong> {property.bathrooms || "N/A"}
-          </p>
-          <p>
-            <strong>Price:</strong> ${property.price} / night
-          </p>
-          <p>
-            <strong>Available:</strong>{" "}
-            {formatDate(property.available_from)} → {formatDate(property.available_to)}
+            <strong>Available:</strong> {formatDate(property.available_from)} → {formatDate(property.available_to)}
           </p>
         </div>
 
@@ -125,10 +112,7 @@ const PropertyDetail = () => {
         </button>
 
         {showModal && (
-          <BookingModal
-            propertyId={property.id}
-            onClose={() => setShowModal(false)}
-          />
+          <BookingModal propertyId={property.id} onClose={() => setShowModal(false)} />
         )}
       </div>
     </div>

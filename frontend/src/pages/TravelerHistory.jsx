@@ -10,11 +10,9 @@ const TravelerHistory = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // ✅ Replace this with the logged-in traveler's ID (from session/localStorage)
-        const travelerId = localStorage.getItem("traveler_id") || 37;
-
+        // ✅ Let the backend handle authentication and get traveler ID from session
         const res = await axios.get(
-          `http://localhost:5000/api/bookings/traveler/${travelerId}`,
+          `http://localhost:5000/api/bookings/traveler`,
           { withCredentials: true }
         );
 

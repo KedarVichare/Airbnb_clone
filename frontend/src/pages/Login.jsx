@@ -1,31 +1,45 @@
 import { useState } from "react";
 import AuthService from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const [role, setRole] = useState("traveler");
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { role, ...formData };
+    setError("");
+    setLoading(true);
 
     try {
-      console.log("LOGIN payload →", payload);
+      // ✅ Send role, email, and password
+      const res = await AuthService.login(role, formData);
 
-      // ✅ Ensure cookies (session) are sent and saved
-      const res = await AuthService.login(role, payload, { withCredentials: true });
+      const userRole = res.data.role || role;
 
-      console.log("Login success:", res.data);
-      onLogin();
-      navigate("/home");
+      // ✅ Store role & session
+      localStorage.setItem("role", userRole);
+      localStorage.setItem("user_id", res.data.user?.id || "");
+      login(userRole);
+
+      // ✅ Redirect by role
+      if (userRole === "owner") {
+        navigate("/owner/dashboard");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       console.error("Login failed:", err.response?.data || err.message);
-      setError("Login failed. Please try again.");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,12 +51,12 @@ export default function Login({ onLogin }) {
         </div>
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
 
-        {/* Role toggle */}
+        {/* Role Toggle */}
         <div className="flex justify-center gap-4 mb-6">
           <button
             type="button"
             onClick={() => setRole("traveler")}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg font-semibold ${
               role === "traveler" ? "bg-rose-500 text-white" : "bg-gray-200"
             }`}
           >
@@ -51,7 +65,7 @@ export default function Login({ onLogin }) {
           <button
             type="button"
             onClick={() => setRole("owner")}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg font-semibold ${
               role === "owner" ? "bg-rose-500 text-white" : "bg-gray-200"
             }`}
           >
@@ -63,32 +77,38 @@ export default function Login({ onLogin }) {
           <input
             name="email"
             type="email"
+            placeholder="Email"
             value={formData.email}
             onChange={onChange}
-            placeholder="Email"
             className="w-full p-3 border rounded-lg"
             required
           />
           <input
             name="password"
             type="password"
+            placeholder="Password"
             value={formData.password}
             onChange={onChange}
-            placeholder="Password"
             className="w-full p-3 border rounded-lg"
             required
           />
-
           {error && <p className="text-red-600 text-center">{error}</p>}
-
-          <button type="submit" className="w-full bg-rose-500 text-white py-3 rounded-lg">
-            Login
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+              loading
+                ? "bg-rose-300 cursor-not-allowed"
+                : "bg-rose-500 hover:bg-rose-600"
+            }`}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
+        <p className="text-center mt-6 text-gray-600">
           Don’t have an account?{" "}
-          <a href={`/signup?role=${role}`} className="text-rose-500 font-semibold hover:underline">
+          <a href="/signup" className="text-rose-500 font-semibold hover:underline">
             Sign up here
           </a>
         </p>

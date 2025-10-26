@@ -9,7 +9,8 @@ const signup = async (req, res) => {
 
   try {
     const existingUser = await findUserByEmail(email);
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -21,7 +22,7 @@ const signup = async (req, res) => {
       location: role === "owner" ? location : null,
     });
 
-    res.status(201).json({ message: "User registered", userId });
+    res.status(201).json({ message: "User registered successfully", userId });
   } catch (err) {
     console.error("Signup error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -31,11 +32,23 @@ const signup = async (req, res) => {
 // ----------------- Login -----------------
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+
+    if (!email || !password || !role) {
+      return res
+        .status(400)
+        .json({ message: "Email, password, and role are required" });
+    }
 
     const user = await findUserByEmail(email);
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    if (user.role !== role) {
+      return res
+        .status(403)
+        .json({ message: `This account is not registered as a ${role}` });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -44,7 +57,12 @@ const login = async (req, res) => {
     }
 
     req.session.user = { id: user.id, email: user.email, role: user.role };
-    res.json({ message: "Login successful", user: req.session.user });
+
+    res.json({
+      message: "Login successful",
+      user: req.session.user,
+      role: user.role,
+    });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -55,10 +73,10 @@ const login = async (req, res) => {
 const logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error("Logout error:", err.message);
+      console.error("Logout error:", err);
       return res.status(500).json({ message: "Logout failed" });
     }
-    res.clearCookie("connect.sid");
+    res.clearCookie("connect.sid", { path: "/" });
     res.json({ message: "Logout successful" });
   });
 };
@@ -66,7 +84,11 @@ const logout = (req, res) => {
 // ----------------- Check Session -----------------
 const checkSession = (req, res) => {
   if (req.session && req.session.user) {
-    res.json({ isLoggedIn: true, user: req.session.user });
+    res.json({
+      isLoggedIn: true,
+      role: req.session.user.role,
+      user: req.session.user,
+    });
   } else {
     res.json({ isLoggedIn: false });
   }

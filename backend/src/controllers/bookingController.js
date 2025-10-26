@@ -1,201 +1,219 @@
+// backend/src/controllers/bookingController.js
 const db = require("../config/db");
-const Booking = require("../models/bookingmodel");
+const Booking = require("../models/bookingModel");
 
-// ✅ Create Booking (Traveler)
+/**
+ * ✅ Traveler: Create a new booking request
+ */
 exports.createBooking = async (req, res) => {
   try {
-    // Get traveler ID from session (secure)
-    const traveler_id = req.session.user?.id;
+    const travelerId = req.session.user?.id;
+    const userRole = req.session.user?.role;
     const { property_id, start_date, end_date, guests } = req.body;
-    const status = "PENDING"; // default
 
-    // Check authentication
-    if (!traveler_id || req.session.user?.role !== "traveler") {
-      return res.status(401).json({ error: "Not authorized" });
+    // 🔒 Auth check
+    if (!travelerId || userRole !== "traveler") {
+      return res.status(401).json({ message: "Not authorized. Traveler login required." });
     }
 
-    // Basic validation
+    // 🧾 Input validation
     if (!property_id || !start_date || !end_date || !guests) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ message: "Missing required booking details." });
     }
 
-    // Validate date order
     if (new Date(end_date) <= new Date(start_date)) {
-      return res.status(400).json({ error: "end_date must be after start_date" });
+      return res.status(400).json({ message: "End date must be after start date." });
     }
 
-    // ✅ Check for overlapping bookings for the same property
-    const [conflicts] = await db.query(
-      `SELECT 1 FROM bookings
-       WHERE property_id = ?
-       AND status IN ('PENDING','ACCEPTED')
-       AND NOT (end_date < ? OR start_date > ?)`,
-      [property_id, start_date, end_date]
-    );
-
-    if (conflicts.length > 0) {
-      return res.status(409).json({ error: "Property not available for these dates" });
+    // ✅ Check property availability
+    const available = await Booking.isPropertyAvailable(property_id, start_date, end_date);
+    if (!available) {
+      return res.status(409).json({ message: "Property not available for selected dates." });
     }
 
-    // ✅ Insert booking
-    const [result] = await db.query(
-      `INSERT INTO bookings (traveler_id, property_id, start_date, end_date, guests, status)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [traveler_id, property_id, start_date, end_date, guests, status]
-    );
+    // ✅ Create booking (PENDING by default)
+    const bookingId = await Booking.createBooking({
+      travelerId,
+      propertyId: property_id,
+      startDate: start_date,
+      endDate: end_date,
+      guests,
+    });
 
-    res
-      .status(201)
-      .json({ message: `Booking created with status ${status}`, bookingId: result.insertId });
-  } catch (error) {
-    console.error("Error creating booking:", error);
-    res.status(500).json({ error: error.message });
+    res.status(201).json({
+      success: true,
+      message: "Booking request created successfully (status: PENDING).",
+      bookingId,
+    });
+  } catch (err) {
+    console.error("❌ Error creating booking:", err);
+    res.status(500).json({ message: "Server error creating booking." });
   }
 };
 
-// ✅ List all bookings (admin/debug use)
-exports.listBookings = async (req, res, next) => {
+/**
+ * ✅ Admin/Debug: List all bookings
+ */
+exports.listBookings = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM bookings");
+    const [rows] = await db.query("SELECT * FROM bookings ORDER BY created_at DESC");
     res.json(rows);
   } catch (err) {
-    next(err);
+    console.error("❌ Error listing bookings:", err);
+    res.status(500).json({ message: "Server error listing bookings." });
   }
 };
 
-// ✅ Traveler: Get all bookings by logged-in traveler
+/**
+ * ✅ Traveler: Get all bookings by logged-in traveler
+ */
 exports.getBookingsByTraveler = async (req, res) => {
   try {
-    const traveler_id = req.session.user?.id;
-    if (!traveler_id || req.session.user?.role !== "traveler") {
-      return res.status(401).json({ message: "Not authorized" });
+    const travelerId = req.session.user?.id;
+    if (!travelerId || req.session.user?.role !== "traveler") {
+      return res.status(401).json({ message: "Not authorized. Traveler only." });
     }
 
-    const [rows] = await db.query(
-      `SELECT 
-         b.id AS booking_id,
-         b.start_date,
-         b.end_date,
-         b.guests,
-         b.status,
-         p.id AS property_id,
-         p.title,
-         p.location,
-         p.price,
-         p.photo_url
-       FROM bookings b
-       JOIN properties p ON b.property_id = p.id
-       WHERE b.traveler_id = ?
-       ORDER BY b.created_at DESC`,
-      [traveler_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "No bookings found for this traveler" });
-    }
-
+    const rows = await Booking.listForTraveler(travelerId);
     res.json(rows);
   } catch (err) {
-    console.error("Error fetching traveler bookings:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error fetching traveler bookings:", err);
+    res.status(500).json({ message: "Server error fetching traveler bookings." });
   }
 };
 
-// ✅ Owner: Get bookings for all their properties
+/**
+ * ✅ Owner: Get bookings for all their properties
+ */
 exports.getBookingsByOwner = async (req, res) => {
   try {
-    const owner_id = req.session.user?.id;
-    if (!owner_id || req.session.user?.role !== "owner") {
-      return res.status(401).json({ message: "Not authorized" });
+    const ownerId = req.session.user?.id;
+    const userRole = req.session.user?.role;
+
+    if (!ownerId || userRole !== "owner") {
+      return res.status(401).json({ message: "Not authorized. Owner login required." });
     }
 
+    // ✅ Join bookings + traveler + property info
     const [rows] = await db.query(
       `SELECT 
-         b.id AS booking_id,
-         b.start_date,
-         b.end_date,
-         b.guests,
-         b.status,
-         p.id AS property_id,
-         p.title,
-         p.location,
-         p.price,
-         p.photo_url
-       FROM bookings b
-       JOIN properties p ON b.property_id = p.id
-       WHERE p.owner_id = ?
-       ORDER BY b.created_at DESC`,
-      [owner_id]
+          b.id AS booking_id,
+          b.start_date,
+          b.end_date,
+          b.guests,
+          b.status,
+          b.created_at,
+          p.id AS property_id,
+          p.title AS property_title,
+          p.location,
+          p.price,
+          p.photo_url,
+          u.name AS traveler_name,
+          u.email AS traveler_email
+        FROM bookings b
+        JOIN properties p ON b.property_id = p.id
+        JOIN users u ON b.traveler_id = u.id
+        WHERE p.owner_id = ?
+        ORDER BY b.created_at DESC`,
+      [ownerId]
     );
-
-    if (rows.length === 0)
-      return res.status(404).json({ message: "No bookings found for this owner" });
 
     res.json(rows);
   } catch (err) {
-    console.error("Error fetching owner bookings:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error fetching owner bookings:", err);
+    res.status(500).json({ message: "Server error fetching owner bookings." });
   }
 };
 
-// ✅ Accept booking (owner only)
+/**
+ * ✅ Owner: Accept a booking
+ */
 exports.acceptBooking = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
-    if (!ownerId || req.session.user?.role !== "owner") {
-      return res.status(401).json({ message: "Not authorized" });
-    }
-
+    const userRole = req.session.user?.role;
     const { id } = req.params;
 
-    // Confirm booking belongs to one of the owner's properties
+    if (!ownerId || userRole !== "owner") {
+      return res.status(401).json({ message: "Not authorized. Owner only." });
+    }
+
+    // ✅ Verify booking belongs to one of the owner's properties
     const [check] = await db.query(
-      `SELECT b.id
-       FROM bookings b
-       JOIN properties p ON p.id = b.property_id
-       WHERE b.id = ? AND p.owner_id = ?`,
+      `SELECT b.*, p.owner_id 
+         FROM bookings b
+         JOIN properties p ON p.id = b.property_id
+        WHERE b.id = ? AND p.owner_id = ?`,
       [id, ownerId]
     );
 
-    if (check.length === 0)
-      return res.status(403).json({ message: "You are not the owner of this booking" });
+    if (check.length === 0) {
+      return res.status(403).json({ message: "You are not the owner of this booking." });
+    }
 
-    const success = await Booking.updateStatus(id, "ACCEPTED");
-    if (success) return res.json({ message: "Booking accepted successfully" });
-    res.status(404).json({ message: "Booking not found" });
+    // ✅ Update booking status
+    const updated = await Booking.updateStatus(id, "ACCEPTED");
+    if (!updated) return res.status(404).json({ message: "Booking not found." });
+
+    // ✅ Optionally block property availability for that period
+    const booking = check[0];
+    await db.query(
+      `UPDATE properties 
+         SET available_from = DATE_ADD(?, INTERVAL 1 DAY), 
+             available_to = ?
+       WHERE id = ?`,
+      [booking.start_date, booking.end_date, booking.property_id]
+    );
+
+    res.json({ success: true, message: "Booking accepted successfully." });
   } catch (err) {
-    console.error("Error accepting booking:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error accepting booking:", err);
+    res.status(500).json({ message: "Server error accepting booking." });
   }
 };
 
-// ✅ Cancel booking (owner only)
+/**
+ * ✅ Owner: Cancel or Reject a booking
+ */
 exports.cancelBooking = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
-    if (!ownerId || req.session.user?.role !== "owner") {
-      return res.status(401).json({ message: "Not authorized" });
-    }
-
+    const userRole = req.session.user?.role;
     const { id } = req.params;
 
-    // Confirm booking belongs to one of the owner's properties
+    if (!ownerId || userRole !== "owner") {
+      return res.status(401).json({ message: "Not authorized. Owner only." });
+    }
+
+    // ✅ Verify booking ownership
     const [check] = await db.query(
-      `SELECT b.id
-       FROM bookings b
-       JOIN properties p ON p.id = b.property_id
-       WHERE b.id = ? AND p.owner_id = ?`,
+      `SELECT b.*, p.owner_id 
+         FROM bookings b
+         JOIN properties p ON p.id = b.property_id
+        WHERE b.id = ? AND p.owner_id = ?`,
       [id, ownerId]
     );
 
-    if (check.length === 0)
-      return res.status(403).json({ message: "You are not the owner of this booking" });
+    if (check.length === 0) {
+      return res.status(403).json({ message: "You are not the owner of this booking." });
+    }
 
-    const success = await Booking.updateStatus(id, "CANCELLED");
-    if (success) return res.json({ message: "Booking cancelled successfully" });
-    res.status(404).json({ message: "Booking not found" });
+    // ✅ Update booking status
+    const updated = await Booking.updateStatus(id, "CANCELLED");
+    if (!updated) return res.status(404).json({ message: "Booking not found." });
+
+    // ✅ Optionally restore property availability
+    await db.query(
+      `UPDATE properties 
+         SET available_from = CURDATE(), 
+             available_to = DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+       WHERE id = ?`,
+      [check[0].property_id]
+    );
+
+    res.json({ success: true, message: "Booking cancelled successfully." });
   } catch (err) {
-    console.error("Error cancelling booking:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error cancelling booking:", err);
+    res.status(500).json({ message: "Server error cancelling booking." });
   }
 };

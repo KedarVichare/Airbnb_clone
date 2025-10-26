@@ -1,116 +1,85 @@
+// frontend/src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Profile from "./pages/Profile";
-import Favourites from "./pages/Favourites";
-import TravelerHistory from "./pages/TravelerHistory";
-import PropertyDetail from "./pages/PropertyDetail";
-import SearchResults from "./pages/SearchResults";
-import OwnerAddProperty from "./pages/OwnerAddProperty";
+import Logout from "./pages/Logout";
+import OwnerDashboard from "./pages/OwnerDashboard";
 import OwnerMyProperties from "./pages/OwnerMyProperties";
+import OwnerAddProperty from "./pages/OwnerAddProperty";
 import OwnerBookings from "./pages/OwnerBookings";
+import PropertyDetail from "./pages/PropertyDetail";
+import Favourites from "./pages/Favourites";
+import Profile from "./pages/Profile";
+import TravelerHistory from "./pages/TravelerHistory";
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
+function AppRoutes() {
+  const { isLoggedIn, role, loading } = useAuth();
 
-  // ✅ Check session on mount
-  useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/auth/check-session", { withCredentials: true })
-      .then((res) => {
-        setIsLoggedIn(res.data.isLoggedIn);
-        setRole(res.data.role || localStorage.getItem("role")); // store user role
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-        setRole(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-700 text-lg">
+        Checking session...
+      </div>
+    );
 
-  if (loading) return <div>Loading...</div>;
-
-  // ✅ Protect Owner-only routes
-  const OwnerRoute = ({ element }) => {
-    if (!isLoggedIn) return <Navigate to="/login" />;
-    if (role !== "owner") return <Navigate to="/home" />;
+  // ✅ General protected route
+  const ProtectedRoute = ({ element }) => {
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
     return element;
   };
 
-  // ✅ Protect Traveler-only routes
+  // ✅ Traveler-only route
   const TravelerRoute = ({ element }) => {
-    if (!isLoggedIn) return <Navigate to="/login" />;
-    if (role !== "traveler") return <Navigate to="/home" />;
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
+    if (role !== "traveler") return <Navigate to="/owner/dashboard" replace />;
+    return element;
+  };
+
+  // ✅ Owner-only route
+  const OwnerRoute = ({ element }) => {
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
+    if (role !== "owner") return <Navigate to="/home" replace />;
     return element;
   };
 
   return (
-    <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route
-          path="/login"
-          element={
-            isLoggedIn ? <Navigate to="/home" /> : <Login onLogin={() => setIsLoggedIn(true)} />
-          }
-        />
-        <Route
-          path="/signup"
-          element={isLoggedIn ? <Navigate to="/home" /> : <Signup />}
-        />
+    <Routes>
+      {/* Public */}
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/logout" element={<Logout />} />
 
-        {/* Traveler routes */}
-        <Route
-          path="/"
-          element={isLoggedIn ? <Home /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/home"
-          element={isLoggedIn ? <Home /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/profile"
-          element={TravelerRoute({ element: <Profile /> })}
-        />
-        <Route
-          path="/favourites"
-          element={TravelerRoute({ element: <Favourites /> })}
-        />
-        <Route
-          path="/history"
-          element={TravelerRoute({ element: <TravelerHistory /> })}
-        />
-        <Route
-          path="/property/:id"
-          element={TravelerRoute({ element: <PropertyDetail /> })}
-        />
-        <Route path="/search" element={<SearchResults />} />
+      {/* Traveler */}
+      <Route path="/" element={<Navigate to="/home" replace />} />
+      <Route path="/home" element={TravelerRoute({ element: <Home /> })} />
+      <Route path="/property/:id" element={TravelerRoute({ element: <PropertyDetail /> })} />
+      <Route path="/favourites" element={TravelerRoute({ element: <Favourites /> })} />
+      <Route path="/profile" element={TravelerRoute({ element: <Profile /> })} />
+      <Route path="/history" element={TravelerRoute({ element: <TravelerHistory /> })} />
 
-        {/* Owner routes */}
-        <Route
-          path="/owner/properties"
-          element={OwnerRoute({ element: <OwnerMyProperties /> })}
-        />
-        <Route
-          path="/owner/properties/new"
-          element={OwnerRoute({ element: <OwnerAddProperty /> })}
-        />
-        <Route
-          path="/owner/bookings"
-          element={OwnerRoute({ element: <OwnerBookings /> })}
-        />
+      {/* Owner */}
+      <Route path="/owner/dashboard" element={OwnerRoute({ element: <OwnerDashboard /> })} />
+      <Route path="/owner/properties" element={OwnerRoute({ element: <OwnerMyProperties /> })} />
+      <Route path="/owner/properties/new" element={OwnerRoute({ element: <OwnerAddProperty /> })} />
+      <Route path="/owner/bookings" element={OwnerRoute({ element: <OwnerBookings /> })} />
 
-        {/* Fallback redirect */}
-        <Route path="*" element={<Navigate to="/home" />} />
-      </Routes>
-    </Router>
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
 
