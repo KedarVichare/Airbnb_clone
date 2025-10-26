@@ -3,19 +3,30 @@ import axios from "axios";
 
 const AUTH_API_URL = "http://localhost:5000/api/auth";
 
+// Always include credentials globally
+axios.defaults.withCredentials = true;
+
 class AuthService {
   async login(role, payload) {
-    return axios.post(`${AUTH_API_URL}/${role}/login`, payload, {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true, // ✅ important for sessions
-    });
+    return axios.post(
+      `${AUTH_API_URL}/login`,
+      { ...payload, role },
+      {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      }
+    );
   }
 
   async signup(role, payload) {
-    return axios.post(`${AUTH_API_URL}/${role}/signup`, payload, {
-      headers: { "Content-Type": "application/json" },
-      withCredentials: true, // ✅ include cookies for registration if needed
-    });
+    return axios.post(
+      `${AUTH_API_URL}/signup`,
+      { ...payload, role },
+      {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      }
+    );
   }
 
   async logout() {

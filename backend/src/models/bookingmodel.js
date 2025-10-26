@@ -2,7 +2,7 @@
 const db = require("../config/db");
 
 /**
- * Create a booking → status PENDING
+ * Create a booking (default: PENDING)
  */
 async function createBooking({ travelerId, propertyId, startDate, endDate, guests }) {
   const [result] = await db.query(
@@ -15,7 +15,7 @@ async function createBooking({ travelerId, propertyId, startDate, endDate, guest
 }
 
 /**
- * Get a single booking by id
+ * Get a single booking by ID
  */
 async function getBookingById(id) {
   const [rows] = await db.query(`SELECT * FROM bookings WHERE id = ?`, [id]);
@@ -23,61 +23,55 @@ async function getBookingById(id) {
 }
 
 /**
- * List bookings for a traveler (joins property info for convenience)
+ * Get all bookings for a traveler (with property details)
  */
 async function listForTraveler(travelerId) {
   const [rows] = await db.query(
-    `SELECT b.*, p.title, p.city, p.state
-       FROM bookings b
-       JOIN properties p ON p.id = b.property_id
-      WHERE b.traveler_id = ?
-      ORDER BY b.created_at DESC`,
+    `SELECT 
+        b.*, 
+        p.title AS property_title, 
+        p.location, 
+        p.price, 
+        p.photo_url
+     FROM bookings b
+     JOIN properties p ON p.id = b.property_id
+     WHERE b.traveler_id = ?
+     ORDER BY b.created_at DESC`,
     [travelerId]
   );
   return rows;
 }
 
 /**
- * List bookings for an owner (uses properties.owner_id)
- * Requires your properties table to have an owner_id column.
+ * Get all bookings for an owner (joins properties table)
  */
 async function listForOwner(ownerId) {
   const [rows] = await db.query(
-    `SELECT b.*, p.title, p.city, p.state
-       FROM bookings b
-       JOIN properties p ON p.id = b.property_id
-      WHERE p.owner_id = ?
-      ORDER BY b.created_at DESC`,
+    `SELECT 
+        b.*, 
+        p.title AS property_title, 
+        p.location, 
+        p.price, 
+        p.photo_url
+     FROM bookings b
+     JOIN properties p ON p.id = b.property_id
+     WHERE p.owner_id = ?
+     ORDER BY b.created_at DESC`,
     [ownerId]
   );
   return rows;
 }
 
 /**
- * Update status (ACCEPTED, CANCELLED, PENDING)
+ * Update booking status (ACCEPTED / CANCELLED / PENDING)
  */
-async function updateStatus(id, newStatus) {
-  const [res] = await db.query(
-    `UPDATE bookings SET status = ? WHERE id = ?`,
-    [newStatus, id]
-  );
-  return res.affectedRows === 1;
+async function updateStatus(id, status) {
+  const [res] = await db.query(`UPDATE bookings SET status = ? WHERE id = ?`, [status, id]);
+  return res.affectedRows > 0;
 }
 
 /**
- * Convenience wrappers
- */
-async function acceptBooking(id) {
-  return updateStatus(id, "ACCEPTED");
-}
-
-async function cancelBooking(id) {
-  return updateStatus(id, "CANCELLED");
-}
-
-/**
- * Optional: Check overlapping bookings for a property
- * Returns true if the property is free in the requested window.
+ * Check if a property is available within the given date range
  */
 async function isPropertyAvailable(propertyId, startDate, endDate) {
   const [rows] = await db.query(
@@ -98,7 +92,5 @@ module.exports = {
   listForTraveler,
   listForOwner,
   updateStatus,
-  acceptBooking,
-  cancelBooking,
   isPropertyAvailable,
 };

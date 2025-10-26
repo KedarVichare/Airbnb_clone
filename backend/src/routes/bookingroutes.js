@@ -12,7 +12,5 @@ router.get("/owner", ensureOwner, bookingController.getBookingsByOwner);
 router.put("/:id/accept", ensureOwner, bookingController.acceptBooking);
 router.put("/:id/cancel", ensureOwner, bookingController.cancelBooking);
 
-// Optional admin/debug
-router.get("/", bookingController.listBookings);
 
 module.exports = router;
