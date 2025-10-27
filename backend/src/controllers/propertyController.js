@@ -7,7 +7,6 @@ const {
 const { getNextAvailableDate } = require("../models/bookingmodel");
 const db = require("../config/db");
 
-// list properties for the current owner
 exports.getMyProperties = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -15,8 +14,8 @@ exports.getMyProperties = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
     const [rows] = await db.query(
-      `SELECT id, title, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url
-         FROM properties WHERE owner_id = ? ORDER BY created_at DESC`,
+    `SELECT id, title, type, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url
+      FROM properties WHERE owner_id = ? ORDER BY created_at DESC`,
       [ownerId]
     );
     res.json(rows);
@@ -26,7 +25,6 @@ exports.getMyProperties = async (req, res) => {
   }
 };
 
-// create property (owner only)
 exports.createMyProperty = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -34,15 +32,15 @@ exports.createMyProperty = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
     const {
-      title, description, location, price,
+      title, description, type, location, price,
       amenities, bedrooms, bathrooms, available_from, available_to, photo_url
     } = req.body;
 
     const [result] = await db.query(
       `INSERT INTO properties
-         (owner_id, title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [ownerId, title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url]
+         (owner_id, title, type, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [ownerId, title, type, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url]
     );
     res.status(201).json({ message: "Property created", id: result.insertId });
   } catch (err) {
@@ -51,7 +49,6 @@ exports.createMyProperty = async (req, res) => {
   }
 };
 
-// update property if I own it
 exports.updateMyProperty = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -59,20 +56,19 @@ exports.updateMyProperty = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
     const { id } = req.params;
-    // ownership check + update
     const [check] = await db.query(`SELECT id FROM properties WHERE id = ? AND owner_id = ?`, [id, ownerId]);
     if (check.length === 0) return res.status(403).json({ message: "You don't own this property" });
 
     const {
-      title, description, location, price,
+      title, description, type, location, price,
       amenities, bedrooms, bathrooms, available_from, available_to, photo_url
     } = req.body;
 
     await db.query(
       `UPDATE properties
-          SET title=?, description=?, location=?, price=?, amenities=?, bedrooms=?, bathrooms=?, available_from=?, available_to=?, photo_url=?
+          SET title=?, type=?, description=?, location=?, price=?, amenities=?, bedrooms=?, bathrooms=?, available_from=?, available_to=?, photo_url=?
         WHERE id=?`,
-      [title, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url, id]
+      [title, type, description, location, price, amenities, bedrooms, bathrooms, available_from, available_to, photo_url, id]
     );
     res.json({ message: "Property updated" });
   } catch (err) {
@@ -81,7 +77,6 @@ exports.updateMyProperty = async (req, res) => {
   }
 };
 
-// delete property if I own it
 exports.deleteMyProperty = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -101,8 +96,7 @@ exports.deleteMyProperty = async (req, res) => {
 };
 
 
-// Get all properties
-exports.getProperties = async (req, res) => {   // ✅ plural
+exports.getProperties = async (req, res) => {
   try {
     const properties = await getAllProperties();
     res.json(properties);
@@ -112,7 +106,6 @@ exports.getProperties = async (req, res) => {   // ✅ plural
   }
 };
 
-// Filter properties
 exports.searchProperties = async (req, res) => {
   try {
     const { location, startDate, endDate } = req.query;
@@ -124,13 +117,11 @@ exports.searchProperties = async (req, res) => {
   }
 };
 
-// Get property details
-exports.getProperty = async (req, res) => {     // ✅ singular
+exports.getProperty = async (req, res) => {  
   try {
     const property = await getPropertyById(req.params.id);
     if (!property) return res.status(404).json({ message: "Property not found" });
     
-    // Get the next available date considering bookings
     const nextAvailableDate = await getNextAvailableDate(req.params.id);
     property.next_available_date = nextAvailableDate;
     
@@ -141,13 +132,13 @@ exports.getProperty = async (req, res) => {     // ✅ singular
   }
 };
 
-// Add property
 exports.addProperty = async (req, res) => {
   try {
-    const { title, description, location, price, owner_id } = req.body;
+    const { title, description, type, location, price, owner_id } = req.body;
     const newId = await createProperty({
       title,
       description,
+      type,
       location,
       price,
       owner_id,

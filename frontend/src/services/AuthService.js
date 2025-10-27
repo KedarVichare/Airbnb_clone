@@ -1,9 +1,7 @@
-// frontend/src/services/AuthService.js
 import axios from "axios";
 
 const AUTH_API_URL = "http://localhost:5000/api/auth";
 
-// Always include credentials globally
 axios.defaults.withCredentials = true;
 
 class AuthService {

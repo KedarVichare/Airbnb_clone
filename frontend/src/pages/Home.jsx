@@ -67,23 +67,19 @@ const Home = () => {
         )}
       </div>
 
-      {/* AI Concierge Button */}
       <AIConciergeButton onClick={() => setIsConciergeOpen(true)} />
 
-      {/* AI Concierge Panel */}
       <AIConciergePanel
         isOpen={isConciergeOpen}
         onClose={handleCloseConcierge}
         onSubmit={handleConciergeSubmit}
       />
 
-      {/* Concierge Results */}
       <ConciergeResults
         results={conciergeResults}
         onClose={handleCloseResults}
       />
 
-      {/* Error Display */}
       {conciergeError && (
         <div className="fixed bottom-4 left-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
           <div className="flex items-center">

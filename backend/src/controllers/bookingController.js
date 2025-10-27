@@ -1,22 +1,17 @@
-// backend/src/controllers/bookingController.js
 const db = require("../config/db");
-const Booking = require("../models/bookingModel");
+const Booking = require("../models/bookingmodel");
 
-/**
- * ✅ Traveler: Create a new booking request
- */
+
 exports.createBooking = async (req, res) => {
   try {
     const travelerId = req.session.user?.id;
     const userRole = req.session.user?.role;
     const { property_id, start_date, end_date, guests } = req.body;
 
-    // 🔒 Auth check
     if (!travelerId || userRole !== "traveler") {
       return res.status(401).json({ message: "Not authorized. Traveler login required." });
     }
 
-    // 🧾 Input validation
     if (!property_id || !start_date || !end_date || !guests) {
       return res.status(400).json({ message: "Missing required booking details." });
     }
@@ -25,13 +20,11 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ message: "End date must be after start date." });
     }
 
-    // ✅ Check property availability
     const available = await Booking.isPropertyAvailable(property_id, start_date, end_date);
     if (!available) {
       return res.status(409).json({ message: "Property not available for selected dates." });
     }
 
-    // ✅ Create booking (PENDING by default)
     const bookingId = await Booking.createBooking({
       travelerId,
       propertyId: property_id,
@@ -46,27 +39,23 @@ exports.createBooking = async (req, res) => {
       bookingId,
     });
   } catch (err) {
-    console.error("❌ Error creating booking:", err);
+    console.error("Error creating booking:", err);
     res.status(500).json({ message: "Server error creating booking." });
   }
 };
 
-/**
- * ✅ Admin/Debug: List all bookings
- */
+
 exports.listBookings = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM bookings ORDER BY created_at DESC");
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error listing bookings:", err);
+    console.error("Error listing bookings:", err);
     res.status(500).json({ message: "Server error listing bookings." });
   }
 };
 
-/**
- * ✅ Traveler: Get all bookings by logged-in traveler
- */
+
 exports.getBookingsByTraveler = async (req, res) => {
   try {
     const travelerId = req.session.user?.id;
@@ -77,14 +66,11 @@ exports.getBookingsByTraveler = async (req, res) => {
     const rows = await Booking.listForTraveler(travelerId);
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error fetching traveler bookings:", err);
+    console.error("Error fetching traveler bookings:", err);
     res.status(500).json({ message: "Server error fetching traveler bookings." });
   }
 };
 
-/**
- * ✅ Owner: Get bookings for all their properties
- */
 exports.getBookingsByOwner = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -94,7 +80,6 @@ exports.getBookingsByOwner = async (req, res) => {
       return res.status(401).json({ message: "Not authorized. Owner login required." });
     }
 
-    // ✅ Join bookings + traveler + property info
     const [rows] = await db.query(
       `SELECT 
           b.id AS booking_id,
@@ -120,14 +105,11 @@ exports.getBookingsByOwner = async (req, res) => {
 
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error fetching owner bookings:", err);
+    console.error("Error fetching owner bookings:", err);
     res.status(500).json({ message: "Server error fetching owner bookings." });
   }
 };
 
-/**
- * ✅ Owner: Accept a booking
- */
 exports.acceptBooking = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -138,7 +120,6 @@ exports.acceptBooking = async (req, res) => {
       return res.status(401).json({ message: "Not authorized. Owner only." });
     }
 
-    // ✅ Verify booking belongs to one of the owner's properties
     const [check] = await db.query(
       `SELECT b.*, p.owner_id 
          FROM bookings b
@@ -151,23 +132,16 @@ exports.acceptBooking = async (req, res) => {
       return res.status(403).json({ message: "You are not the owner of this booking." });
     }
 
-    // ✅ Update booking status to ACCEPTED
     const updated = await Booking.updateStatus(id, "ACCEPTED");
     if (!updated) return res.status(404).json({ message: "Booking not found." });
 
-    // Note: Property availability is now automatically handled by getNextAvailableDate()
-    // which includes ACCEPTED bookings in its calculations.
-
     res.json({ success: true, message: "Booking accepted successfully." });
   } catch (err) {
-    console.error("❌ Error accepting booking:", err);
+    console.error("Error accepting booking:", err);
     res.status(500).json({ message: "Server error accepting booking." });
   }
 };
 
-/**
- * ✅ Owner: Cancel or Reject a booking
- */
 exports.cancelBooking = async (req, res) => {
   try {
     const ownerId = req.session.user?.id;
@@ -178,7 +152,6 @@ exports.cancelBooking = async (req, res) => {
       return res.status(401).json({ message: "Not authorized. Owner only." });
     }
 
-    // ✅ Verify booking ownership
     const [check] = await db.query(
       `SELECT b.*, p.owner_id 
          FROM bookings b
@@ -191,16 +164,12 @@ exports.cancelBooking = async (req, res) => {
       return res.status(403).json({ message: "You are not the owner of this booking." });
     }
 
-    // ✅ Update booking status to CANCELLED
     const updated = await Booking.updateStatus(id, "CANCELLED");
     if (!updated) return res.status(404).json({ message: "Booking not found." });
 
-    // Note: Property availability is now automatically handled by getNextAvailableDate()
-    // which excludes CANCELLED bookings. The cancelled booking dates become available immediately.
-
     res.json({ success: true, message: "Booking cancelled successfully." });
   } catch (err) {
-    console.error("❌ Error cancelling booking:", err);
+    console.error("Error cancelling booking:", err);
     res.status(500).json({ message: "Server error cancelling booking." });
   }
 };

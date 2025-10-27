@@ -13,27 +13,23 @@ const createUser = async (user) => {
       user.location || null,
     ]
   );
-  return result.insertId; // returns new user's ID
+  return result.insertId; 
 };
 
-// Find a user by email (for login / signup check)
 const findUserByEmail = async (email) => {
   const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-  return rows[0]; // return first match
+  return rows[0]; 
 };
 
-// Find a user by ID (for session/profile)
 const findUserById = async (id) => {
   const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
   return rows[0];
 };
 
-// Update user profile (Traveler or Owner)
 const updateUser = async (id, data) => {
   const fields = [];
   const values = [];
 
-  // Build dynamic query only for fields provided
   for (let key in data) {
     fields.push(`${key} = ?`);
     values.push(data[key]);

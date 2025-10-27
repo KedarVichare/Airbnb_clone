@@ -6,7 +6,6 @@ const Favourites = () => {
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch user's favourites from backend
   useEffect(() => {
     const fetchFavourites = async () => {
       try {

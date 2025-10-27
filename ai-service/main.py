@@ -9,21 +9,19 @@ import requests
 import logging
 import pytz
 from dotenv import load_dotenv
+import logging
+from dotenv import load_dotenv
+from pathlib import Path
 
-# -----------------------------
-# Load Environment Variables
-# -----------------------------
-load_dotenv(dotenv_path="../backend/.env")
+BASE_DIR = Path(__file__).resolve().parent.parent 
+load_dotenv(BASE_DIR / "backend" / ".env")
+
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 OPEN_WEATHER_API_KEY = os.getenv("OPEN_WEATHER_API_KEY")
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# -----------------------------
-# Initialize FastAPI app
-# -----------------------------
 app = FastAPI(title="AI Concierge Agent", version="2.3.0")
 
 app.add_middleware(
@@ -34,9 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -----------------------------
-# Pydantic Models
-# -----------------------------
 class BookingContext(BaseModel):
     dates: str
     location: str
@@ -91,9 +86,6 @@ class ConciergeResponse(BaseModel):
     local_events: Optional[List[Dict[str, Any]]] = None
 
 
-# -----------------------------
-# Tavily Integration
-# -----------------------------
 async def search_tavily(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
     """Use Tavily API for real-time search data"""
     if not TAVILY_API_KEY:
@@ -117,9 +109,6 @@ async def search_tavily(query: str, max_results: int = 5) -> List[Dict[str, Any]
         return []
 
 
-# -----------------------------
-# Weather Integration with Smart Fallback
-# -----------------------------
 def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
     """Fetch real forecast if trip is soon, else return placeholder"""
     api_key = OPEN_WEATHER_API_KEY
@@ -133,7 +122,6 @@ def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
         end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
         today = datetime.utcnow().date()
 
-        # OpenWeather 5-day forecast limitation
         if (start_date - today).days > 5:
             logger.info(f"Trip to {location} too far ahead — weather unavailable yet.")
             return {
@@ -147,7 +135,6 @@ def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
                 ],
             }
 
-        # --- Fetch real forecast ---
         normalized_location = location.replace(" ", "+")
         url = "https://api.openweathermap.org/data/2.5/forecast"
         params = {"q": normalized_location, "appid": api_key, "units": "metric"}
@@ -159,7 +146,6 @@ def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
             logger.error(f"Unexpected weather data for {location}: {data}")
             return {"location": location, "forecast": []}
 
-        # Convert UTC → local timezone
         city_offset = data.get("city", {}).get("timezone", 0)
         tz = timezone(timedelta(seconds=city_offset))
 
@@ -205,9 +191,6 @@ def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
         }
 
 
-# -----------------------------
-# Tavily-based Activities, Events & Restaurants
-# -----------------------------
 async def get_activities(location: str, party_type: str, preferences: TravelerPreferences) -> List[ActivityCard]:
     query = f"Top tourist attractions and activities in {location} suitable for {party_type}"
     results = await search_tavily(query, max_results=12)
@@ -250,9 +233,6 @@ async def get_restaurants(location: str, party_type: str, preferences: TravelerP
     ]
 
 
-# -----------------------------
-# Helper Functions
-# -----------------------------
 def generate_packing_checklist(weather_info: Dict[str, Any], preferences: TravelerPreferences) -> List[PackingItem]:
     checklist = [
         PackingItem(item="Clothes", category="clothing", weather_dependent=True),
@@ -272,9 +252,6 @@ def generate_packing_checklist(weather_info: Dict[str, Any], preferences: Travel
     return checklist
 
 
-# -----------------------------
-# Main Endpoint
-# -----------------------------
 @app.post("/ai-concierge", response_model=ConciergeResponse)
 async def ai_concierge_agent(request: ConciergeRequest):
     """Main endpoint for travel recommendations"""
@@ -292,7 +269,6 @@ async def ai_concierge_agent(request: ConciergeRequest):
         local_events = await get_local_events(location, dates)
         packing_checklist = generate_packing_checklist(weather_info, preferences)
 
-        # Build day-by-day plan (unique per day)
         start_date, end_date = dates.split(" to ")
         current_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
@@ -334,9 +310,6 @@ async def health_check():
     return {"status": "healthy", "service": "AI Concierge Agent (Tavily + OpenWeather)"}
 
 
-# -----------------------------
-# Run the server
-# -----------------------------
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

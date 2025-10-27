@@ -19,17 +19,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // ✅ Send role, email, and password
       const res = await AuthService.login(role, formData);
 
       const userRole = res.data.role || role;
 
-      // ✅ Store role & session
       localStorage.setItem("role", userRole);
       localStorage.setItem("user_id", res.data.user?.id || "");
       login(userRole);
 
-      // ✅ Redirect by role
       if (userRole === "owner") {
         navigate("/owner/dashboard");
       } else {
@@ -51,7 +48,6 @@ export default function Login() {
         </div>
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
 
-        {/* Role Toggle */}
         <div className="flex justify-center gap-4 mb-6">
           <button
             type="button"

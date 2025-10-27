@@ -27,7 +27,7 @@ class AIConciergeService {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 30000 // 30 second timeout
+        timeout: 30000 
       });
 
       console.log('AI Concierge response:', response.data);
@@ -36,13 +36,10 @@ class AIConciergeService {
       console.error('Error calling AI Concierge service:', error);
       
       if (error.response) {
-        // Server responded with error status
         throw new Error(`AI Concierge service error: ${error.response.data.detail || error.response.statusText}`);
       } else if (error.request) {
-        // Request was made but no response received
         throw new Error('Unable to connect to AI Concierge service. Please make sure the service is running on port 8000.');
       } else {
-        // Something else happened
         throw new Error(`Unexpected error: ${error.message}`);
       }
     }

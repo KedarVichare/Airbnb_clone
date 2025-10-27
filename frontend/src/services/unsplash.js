@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; // 🔑 your real key here
+const ACCESS_KEY = "YOUR_UNSPLASH_ACCESS_KEY"; 
 
 export async function getUnsplashPhoto(query) {
   try {

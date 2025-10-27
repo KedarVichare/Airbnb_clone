@@ -212,7 +212,7 @@ const AIConciergePanel = ({ isOpen, onClose, onSubmit }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <FaUtensils className="inline mr-1" /> {/* ✅ Fixed icon */}
+                  <FaUtensils className="inline mr-1" /> 
                   Dietary Requirements
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -232,7 +232,6 @@ const AIConciergePanel = ({ isOpen, onClose, onSubmit }) => {
             </div>
           </div>
 
-          {/* Free Text Query */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Additional Requests (Optional)

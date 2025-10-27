@@ -84,7 +84,6 @@ const ConciergeResults = ({ results, onClose }) => {
           </div>
         )}
 
-        {/* Tab Navigation */}
         <div className="flex border-b border-gray-200 mx-6 mt-6">
         {[
           { id: 'itinerary', label: 'Day-by-Day Plan' },
@@ -106,9 +105,7 @@ const ConciergeResults = ({ results, onClose }) => {
         ))}
         </div>
 
-        {/* Tab Content */}
         <div className="p-6">
-          {/* Itinerary Tab */}
           {activeTab === 'itinerary' && (
             <div className="space-y-6">
               {results.day_by_day_plan.map((day, index) => (
@@ -123,7 +120,6 @@ const ConciergeResults = ({ results, onClose }) => {
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Morning */}
                     <div className="bg-yellow-50 p-3 rounded-lg">
                       <h4 className="font-medium text-yellow-800 mb-2">Morning</h4>
                       {day.morning.length > 0 ? (
@@ -138,7 +134,6 @@ const ConciergeResults = ({ results, onClose }) => {
                       )}
                     </div>
 
-                    {/* Afternoon */}
                     <div className="bg-orange-50 p-3 rounded-lg">
                       <h4 className="font-medium text-orange-800 mb-2">Afternoon</h4>
                       {day.afternoon.length > 0 ? (
@@ -153,7 +148,6 @@ const ConciergeResults = ({ results, onClose }) => {
                       )}
                     </div>
 
-                    {/* Evening */}
                     <div className="bg-purple-50 p-3 rounded-lg">
                       <h4 className="font-medium text-purple-800 mb-2">Evening</h4>
                       {day.evening.length > 0 ? (
@@ -173,7 +167,6 @@ const ConciergeResults = ({ results, onClose }) => {
             </div>
           )}
 
-          {/* Activities Tab */}
           {activeTab === 'activities' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {results.activity_cards && results.activity_cards.length > 0 ? (
@@ -227,7 +220,6 @@ const ConciergeResults = ({ results, onClose }) => {
             </div>
           )}
 
-          {/* Restaurants Tab */}
           {activeTab === 'restaurants' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {results.restaurant_recommendations && results.restaurant_recommendations.length > 0 ? (
@@ -280,7 +272,6 @@ const ConciergeResults = ({ results, onClose }) => {
             </div>
           )}
 
-          {/* Packing Tab */}
           {activeTab === 'packing' && (
             <div className="space-y-4">
               <div className="bg-blue-50 p-4 rounded-lg">

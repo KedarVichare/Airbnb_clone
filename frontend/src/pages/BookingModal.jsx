@@ -24,7 +24,6 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // If start_date changes and end_date is before it, reset end_date
     if (name === 'start_date' && formData.end_date && value >= formData.end_date) {
       setFormData({ ...formData, [name]: value, end_date: "" });
     } else {
@@ -38,9 +37,8 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
     setMessage("");
 
     try {
-      const traveler_id = localStorage.getItem("traveler_id"); // ✅ defined here
+      const traveler_id = localStorage.getItem("traveler_id"); 
 
-      // ✅ Debug log — check that all values are correct before sending
       console.log({
         traveler_id,
         property_id: propertyId,
@@ -61,7 +59,7 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
         { withCredentials: true }
       );
 
-      setMessage(`✅ ${res.data.message}`);
+      setMessage(` ${res.data.message}`);
     } catch (err) {
       console.error("Booking failed:", err);
       setMessage(

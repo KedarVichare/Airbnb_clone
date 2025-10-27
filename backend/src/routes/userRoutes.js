@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
-// ✅ Get current logged-in user's profile (Promise-based)
 router.get("/me", async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -19,7 +18,6 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// ✅ Update logged-in user's profile (Promise-based)
 router.put("/update", async (req, res) => {
   try {
     const userId = req.session.user?.id;
