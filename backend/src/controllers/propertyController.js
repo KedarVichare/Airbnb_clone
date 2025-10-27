@@ -4,6 +4,7 @@ const {
   filterProperties,
   getPropertyById,
 } = require("../models/propertymodel");
+const { getNextAvailableDate } = require("../models/bookingmodel");
 const db = require("../config/db");
 
 // list properties for the current owner
@@ -128,6 +129,11 @@ exports.getProperty = async (req, res) => {     // ✅ singular
   try {
     const property = await getPropertyById(req.params.id);
     if (!property) return res.status(404).json({ message: "Property not found" });
+    
+    // Get the next available date considering bookings
+    const nextAvailableDate = await getNextAvailableDate(req.params.id);
+    property.next_available_date = nextAvailableDate;
+    
     res.json(property);
   } catch (err) {
     console.error(err);

@@ -72,6 +72,8 @@ async function updateStatus(id, status) {
 
 /**
  * Check if a property is available within the given date range
+ * Note: Only considers PENDING and ACCEPTED bookings (CANCELLED bookings are excluded)
+ * When owner cancels a booking, those dates become available again
  */
 async function isPropertyAvailable(propertyId, startDate, endDate) {
   const [rows] = await db.query(
@@ -86,6 +88,46 @@ async function isPropertyAvailable(propertyId, startDate, endDate) {
   return rows.length === 0;
 }
 
+/**
+ * Get the next available date for a property
+ * Returns the date after all active bookings end, or tomorrow if no active bookings
+ * Note: Only considers PENDING and ACCEPTED bookings (CANCELLED bookings are excluded)
+ */
+async function getNextAvailableDate(propertyId) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get the latest booking end date (excluding CANCELLED bookings)
+    // When owner cancels a booking, those dates become available again
+    const [rows] = await db.query(
+      `SELECT MAX(end_date) as latest_end_date
+       FROM bookings
+       WHERE property_id = ?
+         AND status IN ('PENDING','ACCEPTED')
+         AND end_date >= ?`,
+      [propertyId, today]
+    );
+    
+    if (rows[0] && rows[0].latest_end_date) {
+      // Return the day after the latest booking ends
+      const nextDate = new Date(rows[0].latest_end_date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      return nextDate.toISOString().split('T')[0];
+    }
+    
+    // No upcoming bookings, available from tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  } catch (err) {
+    console.error("Error getting next available date:", err);
+    // Default to tomorrow on error
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }
+}
+
 module.exports = {
   createBooking,
   getBookingById,
@@ -93,4 +135,5 @@ module.exports = {
   listForOwner,
   updateStatus,
   isPropertyAvailable,
+  getNextAvailableDate,
 };

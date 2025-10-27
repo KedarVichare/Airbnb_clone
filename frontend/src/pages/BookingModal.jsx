@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function BookingModal({ propertyId, onClose }) {
+export default function BookingModal({ propertyId, nextAvailableDate, onClose }) {
   const [formData, setFormData] = useState({
     start_date: "",
     end_date: "",
@@ -9,9 +9,27 @@ export default function BookingModal({ propertyId, onClose }) {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [minDate, setMinDate] = useState("");
+
+  // Set minimum date to next available date from prop or tomorrow
+  useEffect(() => {
+    const minDateValue = nextAvailableDate || (() => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    })();
+    setMinDate(minDateValue);
+  }, [nextAvailableDate]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // If start_date changes and end_date is before it, reset end_date
+    if (name === 'start_date' && formData.end_date && value >= formData.end_date) {
+      setFormData({ ...formData, [name]: value, end_date: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -75,6 +93,7 @@ export default function BookingModal({ propertyId, onClose }) {
               name="start_date"
               value={formData.start_date}
               onChange={handleChange}
+              min={minDate}
               className="w-full border rounded-md p-2"
               required
             />
@@ -89,6 +108,7 @@ export default function BookingModal({ propertyId, onClose }) {
               name="end_date"
               value={formData.end_date}
               onChange={handleChange}
+              min={formData.start_date || minDate}
               className="w-full border rounded-md p-2"
               required
             />

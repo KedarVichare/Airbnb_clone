@@ -151,19 +151,12 @@ exports.acceptBooking = async (req, res) => {
       return res.status(403).json({ message: "You are not the owner of this booking." });
     }
 
-    // ✅ Update booking status
+    // ✅ Update booking status to ACCEPTED
     const updated = await Booking.updateStatus(id, "ACCEPTED");
     if (!updated) return res.status(404).json({ message: "Booking not found." });
 
-    // ✅ Optionally block property availability for that period
-    const booking = check[0];
-    await db.query(
-      `UPDATE properties 
-         SET available_from = DATE_ADD(?, INTERVAL 1 DAY), 
-             available_to = ?
-       WHERE id = ?`,
-      [booking.start_date, booking.end_date, booking.property_id]
-    );
+    // Note: Property availability is now automatically handled by getNextAvailableDate()
+    // which includes ACCEPTED bookings in its calculations.
 
     res.json({ success: true, message: "Booking accepted successfully." });
   } catch (err) {
@@ -198,18 +191,12 @@ exports.cancelBooking = async (req, res) => {
       return res.status(403).json({ message: "You are not the owner of this booking." });
     }
 
-    // ✅ Update booking status
+    // ✅ Update booking status to CANCELLED
     const updated = await Booking.updateStatus(id, "CANCELLED");
     if (!updated) return res.status(404).json({ message: "Booking not found." });
 
-    // ✅ Optionally restore property availability
-    await db.query(
-      `UPDATE properties 
-         SET available_from = CURDATE(), 
-             available_to = DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-       WHERE id = ?`,
-      [check[0].property_id]
-    );
+    // Note: Property availability is now automatically handled by getNextAvailableDate()
+    // which excludes CANCELLED bookings. The cancelled booking dates become available immediately.
 
     res.json({ success: true, message: "Booking cancelled successfully." });
   } catch (err) {
