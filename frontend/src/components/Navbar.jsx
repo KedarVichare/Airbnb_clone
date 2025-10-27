@@ -29,12 +29,22 @@ export default function DashboardNavbar() {
 
   // ✅ Search (Traveler only)
   const [locationSearch, setLocationSearch] = useState("");
-  const [dates, setDates] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("");
+  
+  // Get tomorrow's date as minimum for date pickers
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+  const minDate = getTomorrowDate();
 
   const handleSearch = () => {
-    if (!locationSearch && !dates && !guests) return;
-    navigate(`/search?location=${locationSearch}&dates=${dates}&guests=${guests}`);
+    if (!locationSearch && !checkIn && !checkOut && !guests) return;
+    const datesParam = checkIn && checkOut ? `${checkIn}|${checkOut}` : "";
+    navigate(`/search?location=${locationSearch}&dates=${datesParam}&guests=${guests}`);
   };
 
   // Hide search bar on owner dashboard pages
@@ -52,34 +62,46 @@ export default function DashboardNavbar() {
 
       {/* Center - Search bar (only visible for travelers) */}
       {!hideSearch && (
-        <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 space-x-3 hover:shadow-lg transition w-[520px]">
+        <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 hover:shadow-lg transition w-[620px]">
           <input
             type="text"
             value={locationSearch}
             onChange={(e) => setLocationSearch(e.target.value)}
-            placeholder="Search destinations (e.g., Los Angeles)"
+            placeholder="Search destinations"
             className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1.5]"
           />
           <span className="text-gray-300">|</span>
           <input
-            type="text"
-            value={dates}
-            onChange={(e) => setDates(e.target.value)}
-            placeholder="Check-in — Check-out"
+            type="date"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+            min={minDate}
+            placeholder="Check-in"
             className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
+            title="Check-in date"
+          />
+          <input
+            type="date"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+            min={checkIn || minDate}
+            placeholder="Check-out"
+            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
+            title="Check-out date"
           />
           <span className="text-gray-300">|</span>
           <input
             type="number"
             value={guests}
             onChange={(e) => setGuests(e.target.value)}
-            placeholder="Add guests"
-            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[0.7] min-w-[80px]"
+            placeholder="Guests"
             min="1"
+            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[0.7] min-w-[60px]"
           />
           <button
             onClick={handleSearch}
-            className="bg-rose-500 text-white p-2 rounded-full hover:bg-rose-600 transition"
+            className="bg-rose-500 text-white p-2 rounded-full hover:bg-rose-600 transition flex-shrink-0"
+            aria-label="Search"
           >
             <FaSearch size={14} />
           </button>

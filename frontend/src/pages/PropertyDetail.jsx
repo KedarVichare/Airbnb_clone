@@ -83,8 +83,10 @@ const PropertyDetail = () => {
           <p><strong>Bedrooms:</strong> {property.bedrooms || "N/A"}</p>
           <p><strong>Bathrooms:</strong> {property.bathrooms || "N/A"}</p>
           <p><strong>Price:</strong> ${property.price} / night</p>
-          <p>
-            <strong>Available:</strong> {formatDate(property.available_from)} → {formatDate(property.available_to)}
+          <p className="col-span-2">
+            <strong>Available:</strong> {property.next_available_date 
+              ? formatDate(property.next_available_date) + " onwards" 
+              : formatDate(property.available_from) + " → " + formatDate(property.available_to)}
           </p>
         </div>
 
@@ -112,7 +114,11 @@ const PropertyDetail = () => {
         </button>
 
         {showModal && (
-          <BookingModal propertyId={property.id} onClose={() => setShowModal(false)} />
+          <BookingModal 
+            propertyId={property.id} 
+            nextAvailableDate={property.next_available_date}
+            onClose={() => setShowModal(false)} 
+          />
         )}
       </div>
     </div>

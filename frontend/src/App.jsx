@@ -15,6 +15,7 @@ import PropertyDetail from "./pages/PropertyDetail";
 import Favourites from "./pages/Favourites";
 import Profile from "./pages/Profile";
 import TravelerHistory from "./pages/TravelerHistory";
+import SearchResults from "./pages/SearchResults";
 
 function AppRoutes() {
   const { isLoggedIn, role, loading } = useAuth();
@@ -56,6 +57,7 @@ function AppRoutes() {
       {/* Traveler */}
       <Route path="/" element={<Navigate to="/home" replace />} />
       <Route path="/home" element={TravelerRoute({ element: <Home /> })} />
+      <Route path="/search" element={TravelerRoute({ element: <SearchResults /> })} />
       <Route path="/property/:id" element={TravelerRoute({ element: <PropertyDetail /> })} />
       <Route path="/favourites" element={TravelerRoute({ element: <Favourites /> })} />
       <Route path="/profile" element={TravelerRoute({ element: <Profile /> })} />

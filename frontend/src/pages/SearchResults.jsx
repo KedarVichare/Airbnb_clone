@@ -15,7 +15,10 @@ export default function SearchResults() {
   const params = new URLSearchParams(location.search);
   const searchLocation = params.get("location") || "";
   const guests = params.get("guests") || "";
-  const dates = params.get("dates") || "";
+  const datesParam = params.get("dates") || "";
+  
+  // Parse dates if provided (format: "checkIn|checkOut")
+  const [startDate, endDate] = datesParam ? datesParam.split("|") : ["", ""];
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -26,9 +29,15 @@ export default function SearchResults() {
           return;
         }
 
-        // ✅ Call your backend API
+        // ✅ Call backend API with dates if provided
+        const requestParams = { location: searchLocation, guests };
+        if (startDate && endDate) {
+          requestParams.startDate = startDate;
+          requestParams.endDate = endDate;
+        }
+        
         const res = await axios.get("http://localhost:5000/api/properties/search", {
-          params: { location: searchLocation, guests },
+          params: requestParams,
           withCredentials: true,
         });
 
@@ -47,7 +56,7 @@ export default function SearchResults() {
     };
 
     fetchProperties();
-  }, [searchLocation, guests]);
+  }, [searchLocation, guests, startDate, endDate]);
 
   return (
     <div>
