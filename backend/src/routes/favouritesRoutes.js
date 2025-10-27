@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
-// ✅ Add property to favourites
 router.post("/add", async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -23,7 +22,6 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// ✅ Remove property from favourites
 router.delete("/remove/:propertyId", async (req, res) => {
   try {
     const userId = req.session.user?.id;
@@ -43,7 +41,6 @@ router.delete("/remove/:propertyId", async (req, res) => {
   }
 });
 
-// ✅ Get all favourites for logged-in user
 router.get("/my-favourites", async (req, res) => {
   try {
     const userId = req.session.user?.id;

@@ -1,4 +1,3 @@
-// frontend/src/pages/OwnerBookings.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
@@ -32,7 +31,6 @@ export default function OwnerBookings() {
         {},
         { withCredentials: true }
       );
-      // ✅ update local state
       setBookings((prev) =>
         prev.map((b) =>
           b.booking_id === id

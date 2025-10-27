@@ -10,7 +10,6 @@ export default function DashboardNavbar() {
   const location = useLocation();
   const { isLoggedIn, role, logout } = useAuth();
 
-  // ✅ Close dropdown when clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -21,19 +20,16 @@ export default function DashboardNavbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Logout
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
 
-  // ✅ Search (Traveler only)
   const [locationSearch, setLocationSearch] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("");
   
-  // Get tomorrow's date as minimum for date pickers
   const getTomorrowDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -47,12 +43,10 @@ export default function DashboardNavbar() {
     navigate(`/search?location=${locationSearch}&dates=${datesParam}&guests=${guests}`);
   };
 
-  // Hide search bar on owner dashboard pages
   const hideSearch = role === "owner" && location.pathname.startsWith("/owner");
 
   return (
     <nav className="flex items-center justify-between px-6 py-3 shadow-md bg-rose-500 sticky top-0 z-50">
-      {/* Left - Logo */}
       <Link to="/home" className="flex items-center space-x-2">
         <img src="/airbnb-logo.png" alt="Airbnb Logo" className="h-8 w-auto" />
         <span className="hidden sm:block font-bold text-lg text-white tracking-tight">
@@ -60,7 +54,6 @@ export default function DashboardNavbar() {
         </span>
       </Link>
 
-      {/* Center - Search bar (only visible for travelers) */}
       {!hideSearch && (
         <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 hover:shadow-lg transition w-[620px]">
           <input
@@ -108,18 +101,15 @@ export default function DashboardNavbar() {
         </div>
       )}
 
-      {/* Right - Icons & Menu */}
       <div className="flex items-center space-x-4 relative text-white" ref={menuRef}>
         <FaGlobe className="text-lg cursor-pointer hover:scale-110 transition-transform" />
 
-        {/* Traveler favourites */}
         {isLoggedIn && role === "traveler" && (
           <Link to="/favourites" className="hover:text-pink-300">
             <FaHeart className="text-lg cursor-pointer hover:scale-110 transition-transform" />
           </Link>
         )}
 
-        {/* Menu Button */}
         <div
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center bg-white text-gray-600 px-3 py-1 rounded-full space-x-2 cursor-pointer hover:shadow-md transition"
@@ -127,13 +117,11 @@ export default function DashboardNavbar() {
           <FaBars className="text-lg" />
         </div>
 
-        {/* Dropdown */}
         {menuOpen && (
           <div className="absolute right-0 top-12 w-56 bg-white shadow-lg rounded-md text-gray-700 z-20 animate-fadeIn">
             <ul className="text-sm">
               {isLoggedIn ? (
                 <>
-                  {/* Traveler Menu */}
                   {role === "traveler" && (
                     <>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
@@ -151,7 +139,6 @@ export default function DashboardNavbar() {
                     </>
                   )}
 
-                  {/* Owner Menu */}
                   {role === "owner" && (
                     <>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">

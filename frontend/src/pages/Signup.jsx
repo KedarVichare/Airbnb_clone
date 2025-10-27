@@ -28,7 +28,6 @@ export default function Signup({ redirectTo }) {
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Sign Up</h2>
 
-        {/* Role Toggle */}
         <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={() => setRole("traveler")}

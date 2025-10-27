@@ -6,7 +6,6 @@ import axios from "axios";
 const PropertyCard = ({ id, title, location, price, photo_url }) => {
   const [isFavourite, setIsFavourite] = useState(false);
 
-  // ✅ Check if this property is already in favourites when card loads
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
@@ -23,7 +22,6 @@ const PropertyCard = ({ id, title, location, price, photo_url }) => {
     fetchFavourites();
   }, [id]);
 
-  // ✅ Toggle favourite (add/remove)
   const toggleFavourite = async () => {
     try {
       if (isFavourite) {
@@ -46,7 +44,6 @@ const PropertyCard = ({ id, title, location, price, photo_url }) => {
 
   return (
     <div className="relative bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer">
-      {/* ❤️ Favourite Icon */}
       <button
         onClick={toggleFavourite}
         className="absolute top-3 right-3 text-rose-500 hover:scale-110 transition-transform z-10"
@@ -54,7 +51,6 @@ const PropertyCard = ({ id, title, location, price, photo_url }) => {
         {isFavourite ? <FaHeart size={22} /> : <FaRegHeart size={22} />}
       </button>
 
-      {/* Property Image */}
       {photo_url ? (
         <img
           src={photo_url}
@@ -68,7 +64,6 @@ const PropertyCard = ({ id, title, location, price, photo_url }) => {
         </div>
       )}
 
-      {/* Property Details */}
       <div className="p-3">
         <h3 className="font-semibold text-md text-gray-800 truncate">{title}</h3>
         <p className="text-gray-500 text-sm truncate">{location}</p>

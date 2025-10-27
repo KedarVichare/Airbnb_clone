@@ -10,7 +10,6 @@ const TravelerHistory = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        // ✅ Let the backend handle authentication and get traveler ID from session
         const res = await axios.get(
           `http://localhost:5000/api/bookings/traveler`,
           { withCredentials: true }

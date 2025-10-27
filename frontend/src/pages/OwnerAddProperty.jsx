@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 export default function OwnerAddProperty() {
   const [form, setForm] = useState({
     title: "",
+    type: "",
     description: "",
     location: "",
     price: "",
@@ -26,9 +27,9 @@ export default function OwnerAddProperty() {
       const res = await axios.post("http://localhost:5000/api/properties/owner", form, {
         withCredentials: true,
       });
-      setMsg(`✅ ${res.data.message}`);
+      setMsg(` ${res.data.message}`);
       setForm({
-        title: "", description: "", location: "", price: "",
+        title: "", type: "", description: "", location: "", price: "",
         amenities: "", bedrooms: "", bathrooms: "",
         available_from: "", available_to: "", photo_url: "",
       });
@@ -46,6 +47,20 @@ export default function OwnerAddProperty() {
         {msg && <p className="mb-3 text-rose-600">{msg}</p>}
         <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3">
           <input className="border p-2 rounded" placeholder="Title" name="title" value={form.title} onChange={onChange} required/>
+          <select
+            className="border p-2 rounded"
+            name="type"
+            value={form.type}
+            onChange={onChange}
+            required
+          >
+            <option value="">Select type</option>
+            <option value="Apartment">Apartment</option>
+            <option value="House">House</option>
+            <option value="Condo">Condo</option>
+            <option value="Studio">Studio</option>
+            <option value="Other">Other</option>
+          </select>
           <textarea className="border p-2 rounded" placeholder="Description" name="description" value={form.description} onChange={onChange}/>
           <input className="border p-2 rounded" placeholder="Location" name="location" value={form.location} onChange={onChange} required/>
           <input className="border p-2 rounded" placeholder="Price" name="price" value={form.price} onChange={onChange} required/>

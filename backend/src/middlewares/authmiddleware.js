@@ -1,4 +1,3 @@
-// ✅ Require Traveler (must be logged in as traveler)
 function ensureTraveler(req, res, next) {
   if (!req.session.user) {
     return res.status(401).json({ message: "Please log in to continue" });
@@ -9,7 +8,6 @@ function ensureTraveler(req, res, next) {
   next();
 }
 
-// ✅ Require Owner (must be logged in as owner)
 function ensureOwner(req, res, next) {
   if (!req.session.user) {
     return res.status(401).json({ message: "Please log in to continue" });
@@ -20,7 +18,6 @@ function ensureOwner(req, res, next) {
   next();
 }
 
-// ✅ Optional: Require any logged-in user
 function ensureLoggedIn(req, res, next) {
   if (!req.session.user) {
     return res.status(401).json({ message: "Please log in to continue" });

@@ -1,7 +1,6 @@
 const { createUser, findUserByEmail } = require("../models/usermodels");
 const bcrypt = require("bcryptjs");
 
-// ----------------- Signup -----------------
 const signup = async (req, res) => {
   const { name, email, password, role, location } = req.body;
   console.log("Incoming signup request:", req.originalUrl);
@@ -29,7 +28,6 @@ const signup = async (req, res) => {
   }
 };
 
-// ----------------- Login -----------------
 const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -69,7 +67,6 @@ const login = async (req, res) => {
   }
 };
 
-// ----------------- Logout -----------------
 const logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -81,7 +78,6 @@ const logout = (req, res) => {
   });
 };
 
-// ----------------- Check Session -----------------
 const checkSession = (req, res) => {
   if (req.session && req.session.user) {
     res.json({

@@ -1,4 +1,3 @@
-// frontend/src/pages/Logout.jsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -10,12 +9,10 @@ export default function Logout() {
   useEffect(() => {
     const logoutUser = async () => {
       try {
-        // ✅ Call backend logout to destroy session
         await logout();
       } catch (err) {
         console.error("Logout failed:", err);
       } finally {
-        // ✅ Redirect to login page
         navigate("/login");
       }
     };

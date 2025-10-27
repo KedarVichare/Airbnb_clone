@@ -1,8 +1,6 @@
-// frontend/src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -27,20 +25,17 @@ function AppRoutes() {
       </div>
     );
 
-  // ✅ General protected route
   const ProtectedRoute = ({ element }) => {
     if (!isLoggedIn) return <Navigate to="/login" replace />;
     return element;
   };
 
-  // ✅ Traveler-only route
   const TravelerRoute = ({ element }) => {
     if (!isLoggedIn) return <Navigate to="/login" replace />;
     if (role !== "traveler") return <Navigate to="/owner/dashboard" replace />;
     return element;
   };
 
-  // ✅ Owner-only route
   const OwnerRoute = ({ element }) => {
     if (!isLoggedIn) return <Navigate to="/login" replace />;
     if (role !== "owner") return <Navigate to="/home" replace />;

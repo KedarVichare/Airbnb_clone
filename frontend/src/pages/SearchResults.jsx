@@ -11,13 +11,11 @@ export default function SearchResults() {
 
   const location = useLocation();
 
-  // Extract query params
   const params = new URLSearchParams(location.search);
   const searchLocation = params.get("location") || "";
   const guests = params.get("guests") || "";
   const datesParam = params.get("dates") || "";
   
-  // Parse dates if provided (format: "checkIn|checkOut")
   const [startDate, endDate] = datesParam ? datesParam.split("|") : ["", ""];
 
   useEffect(() => {
@@ -29,7 +27,6 @@ export default function SearchResults() {
           return;
         }
 
-        // ✅ Call backend API with dates if provided
         const requestParams = { location: searchLocation, guests };
         if (startDate && endDate) {
           requestParams.startDate = startDate;

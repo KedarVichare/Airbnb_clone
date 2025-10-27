@@ -23,7 +23,6 @@ const Profile = () => {
   const countries = ["United States", "Canada", "United Kingdom", "India", "Australia"];
   const genders = ["Male", "Female", "Other"];
 
-  // ✅ Load current profile info when component mounts
   useEffect(() => {
     axios
       .get("http://localhost:5000/api/users/me", { withCredentials: true })
@@ -44,7 +43,6 @@ const Profile = () => {
     }
   };
 
-  // ✅ Save profile to backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -56,7 +54,6 @@ const Profile = () => {
   
       setMessage("Profile updated successfully!");
   
-      // ✅ Redirect to home page after 1 second
       setTimeout(() => navigate("/home"), 1000);
     } catch (err) {
       console.error("Profile update failed:", err);
@@ -99,7 +96,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* Name */}
           <div>
             <label className="block font-medium">Name</label>
             <input
@@ -111,7 +107,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block font-medium">Email</label>
             <input
@@ -123,7 +118,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block font-medium">Phone</label>
             <input
@@ -135,7 +129,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* About */}
           <div>
             <label className="block font-medium">About Me</label>
             <textarea
@@ -146,7 +139,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* City */}
           <div>
             <label className="block font-medium">City</label>
             <input
@@ -158,7 +150,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* State */}
           <div>
             <label className="block font-medium">State (Abbreviation)</label>
             <input
@@ -172,7 +163,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* Country */}
           <div>
             <label className="block font-medium">Country</label>
             <select
@@ -190,7 +180,6 @@ const Profile = () => {
             </select>
           </div>
 
-          {/* Languages */}
           <div>
             <label className="block font-medium">Languages</label>
             <input
@@ -203,7 +192,6 @@ const Profile = () => {
             />
           </div>
 
-          {/* Gender */}
           <div>
             <label className="block font-medium">Gender</label>
             <select
@@ -220,7 +208,6 @@ const Profile = () => {
             </select>
           </div>
 
-          {/* Save Button */}
           <button
             type="submit"
             className="bg-rose-500 text-white px-6 py-2 rounded hover:bg-rose-600"

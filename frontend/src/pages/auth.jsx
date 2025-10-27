@@ -12,21 +12,19 @@ const LANGUAGES = ["English", "Spanish", "French", "Hindi", "Mandarin"];
 const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
 
 export default function AuthPage() {
-  const [isSignup, setIsSignup] = useState(true);      // true = Sign Up, false = Login
-  const [role, setRole] = useState("traveler");        // "traveler" | "owner"
+  const [isSignup, setIsSignup] = useState(true);      
+  const [role, setRole] = useState("traveler");        
 
   const [formData, setFormData] = useState({
-    // common
     email: "",
     password: "",
-    // signup-only
     name: "",
     phone: "",
     city: "",
     country: "",
     language: "",
     gender: "",
-    location: "",          // owner signup only
+    location: "",          
   });
 
   const onChange = (e) => {
@@ -38,7 +36,6 @@ export default function AuthPage() {
     e.preventDefault();
 
     if (isSignup) {
-      // build payload for signup
       const payload =
         role === "owner"
           ? {
@@ -51,7 +48,7 @@ export default function AuthPage() {
               country: formData.country,
               language: formData.language,
               gender: formData.gender,
-              location: formData.location, // owner only
+              location: formData.location, 
             }
           : {
               role,
@@ -65,21 +62,14 @@ export default function AuthPage() {
               gender: formData.gender,
             };
 
-      // TODO: POST to your backend:
-      //   traveler signup -> POST /api/auth/traveler/signup
-      //   owner signup    -> POST /api/auth/owner/signup
       console.log("SIGNUP payload →", payload);
     } else {
-      // login payload (email + password only)
       const payload = {
         role,
         email: formData.email,
         password: formData.password,
       };
 
-      // TODO: POST to your backend (session-based with express-session):
-      //   traveler login -> POST /api/auth/traveler/login
-      //   owner login    -> POST /api/auth/owner/login
       console.log("LOGIN payload →", payload);
     }
   };
@@ -95,7 +85,6 @@ export default function AuthPage() {
           {isSignup ? "Sign Up" : "Login"} as {role === "traveler" ? "Traveler" : "Owner"}
         </h2>
 
-        {/* Role toggle */}
         <div className="flex justify-center gap-3 mb-6">
           <button
             type="button"
@@ -118,7 +107,6 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* SIGNUP-ONLY FIELDS */}
           {isSignup && (
             <>
               <input
@@ -212,7 +200,6 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* LOGIN FIELDS (email + password only) */}
           {!isSignup && (
             <>
               <input
@@ -244,7 +231,6 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {/* Toggle link */}
         <p className="text-center text-gray-600 mt-6">
           {isSignup ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button
