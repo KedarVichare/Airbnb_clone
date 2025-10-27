@@ -2,24 +2,30 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import httpx
+import requests
 import logging
+import pytz
 from dotenv import load_dotenv
 
+# -----------------------------
+# Load Environment Variables
+# -----------------------------
 load_dotenv(dotenv_path="../backend/.env")
-
-YELP_API_KEY = os.getenv("YELP_API_KEY")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+OPEN_WEATHER_API_KEY = os.getenv("OPEN_WEATHER_API_KEY")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# -----------------------------
 # Initialize FastAPI app
-app = FastAPI(title="AI Concierge Agent", version="1.1.0")
+# -----------------------------
+app = FastAPI(title="AI Concierge Agent", version="2.3.0")
 
-# CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
@@ -31,11 +37,10 @@ app.add_middleware(
 # -----------------------------
 # Pydantic Models
 # -----------------------------
-
 class BookingContext(BaseModel):
-    dates: str  # "2025-10-01 to 2025-10-05"
-    location: str  # "San Jose, CA"
-    party_type: str  # "family", "couple", "solo", "group"
+    dates: str
+    location: str
+    party_type: str
 
 class TravelerPreferences(BaseModel):
     budget: Optional[str] = "medium"
@@ -51,20 +56,20 @@ class ConciergeRequest(BaseModel):
 
 class ActivityCard(BaseModel):
     title: str
-    address: str
-    price_tier: str
-    duration: str
-    tags: List[str]
-    wheelchair_friendly: bool
-    child_friendly: bool
+    address: Optional[str] = None
+    price_tier: Optional[str] = None
+    duration: Optional[str] = None
+    tags: List[str] = []
+    wheelchair_friendly: bool = False
+    child_friendly: bool = False
 
 class RestaurantRecommendation(BaseModel):
     name: str
-    address: str
-    cuisine_type: str
-    price_tier: str
-    dietary_accommodations: List[str]
-    rating: float
+    address: Optional[str]
+    cuisine_type: Optional[str]
+    price_tier: Optional[str]
+    dietary_accommodations: List[str] = []
+    rating: Optional[float] = None
 
 class PackingItem(BaseModel):
     item: str
@@ -87,119 +92,16 @@ class ConciergeResponse(BaseModel):
 
 
 # -----------------------------
-# Mock Data
+# Tavily Integration
 # -----------------------------
-
-MOCK_ACTIVITIES = {
-    "San Jose, CA": [
-        {
-            "title": "Tech Museum of Innovation",
-            "address": "201 S Market St, San Jose, CA 95113",
-            "price_tier": "$$",
-            "duration": "2-3 hours",
-            "tags": ["technology", "family", "educational"],
-            "wheelchair_friendly": True,
-            "child_friendly": True
-        },
-        {
-            "title": "Santana Row Shopping",
-            "address": "377 Santana Row, San Jose, CA 95128",
-            "price_tier": "$$$",
-            "duration": "3-4 hours",
-            "tags": ["shopping", "dining", "entertainment"],
-            "wheelchair_friendly": True,
-            "child_friendly": True
-        },
-        {
-            "title": "Alum Rock Park Hiking",
-            "address": "15350 Penitencia Creek Rd, San Jose, CA 95127",
-            "price_tier": "$",
-            "duration": "2-4 hours",
-            "tags": ["nature", "hiking", "outdoor"],
-            "wheelchair_friendly": False,
-            "child_friendly": True
-        }
-    ]
-}
-
-MOCK_RESTAURANTS = {
-    "San Jose, CA": [
-        {
-            "name": "Orchard City Kitchen",
-            "address": "1875 S Bascom Ave, Campbell, CA 95008",
-            "cuisine_type": "American",
-            "price_tier": "$$",
-            "dietary_accommodations": ["vegetarian", "vegan", "gluten-free"],
-            "rating": 4.2
-        },
-        {
-            "name": "La Victoria Taqueria",
-            "address": "140 E San Carlos St, San Jose, CA 95112",
-            "cuisine_type": "Mexican",
-            "price_tier": "$",
-            "dietary_accommodations": ["vegetarian"],
-            "rating": 4.0
-        }
-    ]
-}
-
-async def get_restaurants_from_yelp(location: str, dietary_filters: list[str], limit: int = 5):
-    """Fetch real restaurants dynamically from Yelp API"""
-    if not YELP_API_KEY:
-        print("⚠️  Yelp API key missing in .env")
-        return []
-
-    term = "restaurants"
-    if dietary_filters:
-        term += " " + " ".join(dietary_filters)  # e.g., "restaurants vegan gluten-free"
-
-    url = "https://api.yelp.com/v3/businesses/search"
-    headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
-    params = {
-        "term": term,
-        "location": location,
-        "limit": limit,
-        "sort_by": "rating"
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.get(url, headers=headers, params=params)
-            response.raise_for_status()
-            data = response.json()
-
-            restaurants = []
-            for r in data.get("businesses", []):
-                restaurants.append({
-                    "name": r.get("name"),
-                    "address": " ".join(r.get("location", {}).get("display_address", [])),
-                    "cuisine_type": ", ".join(r.get("categories", [{}])[0].get("title", "")),
-                    "price_tier": r.get("price", "?"),
-                    "dietary_accommodations": dietary_filters,
-                    "rating": r.get("rating", 0.0)
-                })
-            return restaurants
-    except Exception as e:
-        print("❌ Yelp API error:", e)
-        return []
-
-# -----------------------------
-# Tavily Web Search Integration
-# -----------------------------
-
 async def search_tavily(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
-    """Use Tavily Web Search API for real-time local data"""
-    tavily_api_key = os.getenv("TAVILY_API_KEY")
-    if not tavily_api_key:
+    """Use Tavily API for real-time search data"""
+    if not TAVILY_API_KEY:
         logger.warning("TAVILY_API_KEY not found in .env")
         return []
 
     tavily_url = "https://api.tavily.com/search"
-    payload = {
-        "api_key": tavily_api_key,
-        "query": query,
-        "max_results": max_results
-    }
+    payload = {"api_key": TAVILY_API_KEY, "query": query, "max_results": max_results}
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -216,60 +118,144 @@ async def search_tavily(query: str, max_results: int = 5) -> List[Dict[str, Any]
 
 
 # -----------------------------
-# Helper Functions
+# Weather Integration with Smart Fallback
 # -----------------------------
-
 def get_weather_info(location: str, dates: str) -> Dict[str, Any]:
-    """Mock weather function - Replace with real API if desired"""
-    return {
-        "location": location,
-        "forecast": [
-            {"date": "2025-10-01", "temp": "75°F", "condition": "Sunny"},
-            {"date": "2025-10-02", "temp": "78°F", "condition": "Partly Cloudy"},
-            {"date": "2025-10-03", "temp": "72°F", "condition": "Cloudy"},
-            {"date": "2025-10-04", "temp": "70°F", "condition": "Light Rain"},
-            {"date": "2025-10-05", "temp": "76°F", "condition": "Sunny"}
-        ]
-    }
+    """Fetch real forecast if trip is soon, else return placeholder"""
+    api_key = OPEN_WEATHER_API_KEY
+    if not api_key:
+        logger.warning("OPEN_WEATHER_API_KEY missing in .env")
+        return {"location": location, "forecast": []}
 
-async def get_local_events(location: str, dates: str) -> List[Dict[str, Any]]:
-    """Fetch local events dynamically via Tavily"""
-    query = f"local events happening in {location} during {dates}"
-    tavily_results = await search_tavily(query)
+    try:
+        start_str, end_str = dates.split(" to ")
+        start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+        today = datetime.utcnow().date()
 
-    if not tavily_results:
-        # Fallback mock data
-        return [
-            {
-                "name": "San Jose Jazz Festival",
-                "date": "2025-10-02",
-                "location": "Plaza de César Chávez",
-                "description": "Annual jazz festival featuring local and international artists"
-            },
-            {
-                "name": "Farmers Market",
-                "date": "2025-10-04",
-                "location": "San Pedro Square",
-                "description": "Weekly farmers market with local produce and crafts"
+        # OpenWeather 5-day forecast limitation
+        if (start_date - today).days > 5:
+            logger.info(f"Trip to {location} too far ahead — weather unavailable yet.")
+            return {
+                "location": location,
+                "forecast": [
+                    {
+                        "date": start_date.isoformat(),
+                        "temp": "N/A",
+                        "condition": "Forecast available 5 days before trip",
+                    }
+                ],
             }
-        ]
 
-    return [
-        {
-            "name": r["title"],
-            "date": dates.split(" to ")[0],
+        # --- Fetch real forecast ---
+        normalized_location = location.replace(" ", "+")
+        url = "https://api.openweathermap.org/data/2.5/forecast"
+        params = {"q": normalized_location, "appid": api_key, "units": "metric"}
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        if "list" not in data:
+            logger.error(f"Unexpected weather data for {location}: {data}")
+            return {"location": location, "forecast": []}
+
+        # Convert UTC → local timezone
+        city_offset = data.get("city", {}).get("timezone", 0)
+        tz = timezone(timedelta(seconds=city_offset))
+
+        forecast_map = {}
+        for entry in data["list"]:
+            utc_dt = datetime.utcfromtimestamp(entry["dt"]).replace(tzinfo=timezone.utc)
+            local_dt = utc_dt.astimezone(tz)
+            local_date = local_dt.date()
+
+            if start_date <= local_date <= end_date:
+                temp = entry["main"]["temp"]
+                condition = entry["weather"][0]["description"].title()
+                forecast_map.setdefault(local_date, {"temps": [], "conditions": []})
+                forecast_map[local_date]["temps"].append(temp)
+                forecast_map[local_date]["conditions"].append(condition)
+
+        forecast = []
+        for date, info in forecast_map.items():
+            avg_temp = sum(info["temps"]) / len(info["temps"])
+            condition = max(set(info["conditions"]), key=info["conditions"].count)
+            forecast.append({
+                "date": date.isoformat(),
+                "temp": f"{avg_temp:.1f}°C",
+                "condition": condition,
+            })
+
+        forecast.sort(key=lambda x: x["date"])
+
+        if not forecast:
+            forecast = [{
+                "date": start_date.isoformat(),
+                "temp": "N/A",
+                "condition": "Forecast not available yet"
+            }]
+
+        return {"location": location, "forecast": forecast}
+
+    except Exception as e:
+        logger.error(f"Weather API error for {location}: {e}")
+        return {
             "location": location,
-            "description": r.get("snippet", ""),
-            "url": r.get("url")
+            "forecast": [{"date": "N/A", "temp": "N/A", "condition": "Error fetching data"}],
         }
-        for r in tavily_results
+
+
+# -----------------------------
+# Tavily-based Activities, Events & Restaurants
+# -----------------------------
+async def get_activities(location: str, party_type: str, preferences: TravelerPreferences) -> List[ActivityCard]:
+    query = f"Top tourist attractions and activities in {location} suitable for {party_type}"
+    results = await search_tavily(query, max_results=12)
+    return [
+        ActivityCard(
+            title=r.get("title", "Unknown Activity"),
+            address=r.get("url", ""),
+            duration="2-3 hours",
+            tags=preferences.interests or ["outdoor", "family"],
+            wheelchair_friendly="wheelchair" in query.lower(),
+            child_friendly="child" in query.lower(),
+        )
+        for r in results
     ]
 
 
+async def get_local_events(location: str, dates: str) -> List[Dict[str, Any]]:
+    query = f"events happening in {location} during {dates}"
+    results = await search_tavily(query, max_results=5)
+    return [
+        {"name": r.get("title"), "url": r.get("url"), "description": r.get("snippet", ""), "location": location}
+        for r in results
+    ]
+
+
+async def get_restaurants(location: str, party_type: str, preferences: TravelerPreferences) -> List[RestaurantRecommendation]:
+    dietary = " ".join(preferences.dietary_filters) if preferences.dietary_filters else "restaurants"
+    query = f"best {dietary} restaurants in {location} for {party_type} travelers with price range and ratings"
+    results = await search_tavily(query, max_results=6)
+    return [
+        RestaurantRecommendation(
+            name=r.get("title", "Unknown Restaurant"),
+            address=r.get("url", ""),
+            cuisine_type="Various",
+            price_tier="$$",
+            dietary_accommodations=preferences.dietary_filters,
+            rating=4.0,
+        )
+        for r in results
+    ]
+
+
+# -----------------------------
+# Helper Functions
+# -----------------------------
 def generate_packing_checklist(weather_info: Dict[str, Any], preferences: TravelerPreferences) -> List[PackingItem]:
-    """Generate weather-aware packing checklist"""
     checklist = [
-        PackingItem(item="Clothes for trip", category="clothing", weather_dependent=True),
+        PackingItem(item="Clothes", category="clothing", weather_dependent=True),
         PackingItem(item="Toiletries", category="personal", weather_dependent=False),
         PackingItem(item="Phone charger", category="electronics", weather_dependent=False),
         PackingItem(item="Travel documents", category="documents", weather_dependent=False),
@@ -281,84 +267,71 @@ def generate_packing_checklist(weather_info: Dict[str, Any], preferences: Travel
             break
 
     if preferences.children and preferences.children > 0:
-        checklist.extend([
-            PackingItem(item="Child snacks", category="food", weather_dependent=False),
-            PackingItem(item="Entertainment for kids", category="activities", weather_dependent=False),
-        ])
+        checklist.append(PackingItem(item="Snacks for kids", category="food", weather_dependent=False))
 
     return checklist
 
 
-def create_day_plan(date: str, location: str, preferences: TravelerPreferences) -> DayPlan:
-    """Create a daily plan"""
-    activities = MOCK_ACTIVITIES.get(location, [])
-    filtered = []
-
-    for activity in activities:
-        if preferences.mobility_needs == "wheelchair" and not activity["wheelchair_friendly"]:
-            continue
-        filtered.append(ActivityCard(**activity))
-
-    morning = filtered[:1]
-    afternoon = filtered[1:2]
-    evening = filtered[2:3]
-
-    return DayPlan(date=date, morning=morning, afternoon=afternoon, evening=evening)
-
-
 # -----------------------------
-# API Endpoints
+# Main Endpoint
 # -----------------------------
-
 @app.post("/ai-concierge", response_model=ConciergeResponse)
 async def ai_concierge_agent(request: ConciergeRequest):
-    """Main endpoint for personalized travel recommendations"""
+    """Main endpoint for travel recommendations"""
     try:
-        logger.info(f"Generating itinerary for {request.booking_context.location}")
+        location = request.booking_context.location
+        preferences = request.preferences
+        dates = request.booking_context.dates
+        party_type = request.booking_context.party_type
 
-        start_date, end_date = request.booking_context.dates.split(" to ")
-        weather_info = get_weather_info(request.booking_context.location, request.booking_context.dates)
-        local_events = await get_local_events(request.booking_context.location, request.booking_context.dates)
+        logger.info(f"Generating itinerary for {location}")
 
-        # Build daily plans
-        day_plans = []
+        weather_info = get_weather_info(location, dates)
+        activities = await get_activities(location, party_type, preferences)
+        restaurants = await get_restaurants(location, party_type, preferences)
+        local_events = await get_local_events(location, dates)
+        packing_checklist = generate_packing_checklist(weather_info, preferences)
+
+        # Build day-by-day plan (unique per day)
+        start_date, end_date = dates.split(" to ")
         current_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
 
+        day_plans = []
+        i = 0
         while current_date <= end_date_obj:
-            plan = create_day_plan(current_date.strftime("%Y-%m-%d"), request.booking_context.location, request.preferences)
-            day_plans.append(plan)
+            subset = activities[i:i+3]
+            if len(subset) < 3:
+                subset += activities[:3 - len(subset)]
+            i += 3
+
+            day_plans.append(
+                DayPlan(
+                    date=current_date.strftime("%Y-%m-%d"),
+                    morning=[subset[0]],
+                    afternoon=[subset[1]],
+                    evening=[subset[2]],
+                )
+            )
             current_date += timedelta(days=1)
-
-        all_activities = [a for plan in day_plans for a in (plan.morning + plan.afternoon + plan.evening)]
-
-        # Filter restaurants
-        restaurants = await get_restaurants_from_yelp(
-            request.booking_context.location,
-            request.preferences.dietary_filters
-        )
-        restaurant_recs = [RestaurantRecommendation(**r) for r in restaurants]
-
-        packing_checklist = generate_packing_checklist(weather_info, request.preferences)
 
         return ConciergeResponse(
             day_by_day_plan=day_plans,
-            activity_cards=all_activities,
-            restaurant_recommendations=restaurant_recs,
+            activity_cards=activities,
+            restaurant_recommendations=restaurants,
             packing_checklist=packing_checklist,
             weather_info=weather_info,
-            local_events=local_events
+            local_events=local_events,
         )
 
     except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating recommendations: {str(e)}")
+        logger.error(f"Error generating itinerary: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.get("/health")
 async def health_check():
-    """Simple health check"""
-    return {"status": "healthy", "service": "AI Concierge Agent"}
+    return {"status": "healthy", "service": "AI Concierge Agent (Tavily + OpenWeather)"}
 
 
 # -----------------------------
