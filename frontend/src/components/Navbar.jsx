@@ -55,50 +55,101 @@ export default function DashboardNavbar() {
       </Link>
 
       {!hideSearch && (
-        <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 hover:shadow-lg transition w-[620px]">
-          <input
-            type="text"
-            value={locationSearch}
-            onChange={(e) => setLocationSearch(e.target.value)}
-            placeholder="Search destinations"
-            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1.5]"
-          />
-          <span className="text-gray-300">|</span>
-          <input
-            type="date"
-            value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
-            min={minDate}
-            placeholder="Check-in"
-            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
-            title="Check-in date"
-          />
-          <input
-            type="date"
-            value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-            min={checkIn || minDate}
-            placeholder="Check-out"
-            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
-            title="Check-out date"
-          />
-          <span className="text-gray-300">|</span>
-          <input
-            type="number"
-            value={guests}
-            onChange={(e) => setGuests(e.target.value)}
-            placeholder="Guests"
-            min="1"
-            className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[0.7] min-w-[60px]"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-rose-500 text-white p-2 rounded-full hover:bg-rose-600 transition flex-shrink-0"
-            aria-label="Search"
-          >
-            <FaSearch size={14} />
-          </button>
-        </div>
+        <>
+          {/* Desktop Search Bar */}
+          <div className="hidden md:flex items-center bg-white rounded-full shadow px-4 py-2 hover:shadow-lg transition w-[620px]">
+            <input
+              type="text"
+              value={locationSearch}
+              onChange={(e) => setLocationSearch(e.target.value)}
+              placeholder="Search destinations"
+              className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1.5]"
+            />
+            <span className="text-gray-300">|</span>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              min={minDate}
+              placeholder="Check-in"
+              className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
+              title="Check-in date"
+            />
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              min={checkIn || minDate}
+              placeholder="Check-out"
+              className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[1]"
+              title="Check-out date"
+            />
+            <span className="text-gray-300">|</span>
+            <input
+              type="number"
+              value={guests}
+              onChange={(e) => setGuests(e.target.value)}
+              placeholder="Guests"
+              min="1"
+              className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-[0.7] min-w-[60px]"
+            />
+            <button
+              onClick={handleSearch}
+              className="bg-rose-500 text-white p-2 rounded-full hover:bg-rose-600 transition flex-shrink-0"
+              aria-label="Search"
+            >
+              <FaSearch size={14} />
+            </button>
+          </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden flex flex-col w-full">
+            <div className="flex items-center bg-white rounded-full shadow px-4 py-2 hover:shadow-lg transition mx-2">
+              <input
+                type="text"
+                value={locationSearch}
+                onChange={(e) => setLocationSearch(e.target.value)}
+                placeholder="Search destinations"
+                className="bg-transparent placeholder-gray-500 text-gray-800 outline-none text-sm flex-1"
+              />
+              <button
+                onClick={handleSearch}
+                className="bg-rose-500 text-white p-2 rounded-full hover:bg-rose-600 transition flex-shrink-0 ml-2"
+                aria-label="Search"
+              >
+                <FaSearch size={14} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-4 py-2 space-x-2">
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                min={minDate}
+                placeholder="Check-in"
+                className="bg-white rounded-lg shadow px-2 py-1 text-sm flex-1"
+                title="Check-in date"
+              />
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                min={checkIn || minDate}
+                placeholder="Check-out"
+                className="bg-white rounded-lg shadow px-2 py-1 text-sm flex-1"
+                title="Check-out date"
+              />
+              <input
+                type="number"
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+                placeholder="Guests"
+                min="1"
+                className="bg-white rounded-lg shadow px-2 py-1 text-sm w-20"
+              />
+            </div>
+          </div>
+        </>
       )}
 
       <div className="flex items-center space-x-4 relative text-white" ref={menuRef}>

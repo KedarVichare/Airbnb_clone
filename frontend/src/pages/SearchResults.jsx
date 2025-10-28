@@ -59,11 +59,18 @@ export default function SearchResults() {
     <div>
       <Navbar />
       <div className="p-6 max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">
-          {searchLocation
-            ? `Search results for: ${searchLocation}`
-            : "All Properties"}
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">
+            {searchLocation
+              ? `Search results for: ${searchLocation}`
+              : "All Properties"}
+          </h2>
+          {startDate && endDate && (
+            <p className="text-gray-600">
+              Available for: {new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}
+            </p>
+          )}
+        </div>
 
         {loading ? (
           <p className="text-gray-500">Loading...</p>
@@ -83,9 +90,15 @@ export default function SearchResults() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 mt-4">
-            No results found for "{searchLocation}".
-          </p>
+          <div className="text-gray-500 mt-4">
+            <p>No available properties found for "{searchLocation}"
+              {startDate && endDate && ` during ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`}.
+            </p>
+            <p className="mt-2 text-sm">
+              This could be because the properties are either not available in this location
+              {startDate && endDate && ' or are already booked for these dates'}.
+            </p>
+          </div>
         )}
       </div>
     </div>

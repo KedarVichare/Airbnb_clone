@@ -8,7 +8,7 @@ router.get("/traveler", ensureTraveler, bookingController.getBookingsByTraveler)
 
 router.get("/owner", ensureOwner, bookingController.getBookingsByOwner);
 router.put("/:id/accept", ensureOwner, bookingController.acceptBooking);
-router.put("/:id/cancel", ensureOwner, bookingController.cancelBooking);
+router.put("/:id/cancel", bookingController.cancelBooking);
 
 
 module.exports = router;

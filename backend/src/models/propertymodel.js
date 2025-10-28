@@ -18,17 +18,37 @@ const getAllProperties = async () => {
 
 const filterProperties = async (location, startDate, endDate) => {
   try {
-    let query = "SELECT * FROM properties WHERE 1=1";
+    let query = `
+      SELECT DISTINCT p.* 
+      FROM properties p 
+      LEFT JOIN bookings b ON p.id = b.property_id
+      WHERE 1=1
+    `;
     const params = [];
 
     if (location && location.trim() !== "") {
-      query += " AND (LOWER(location) LIKE LOWER(?) OR LOWER(title) LIKE LOWER(?))";
+      query += " AND (LOWER(p.location) LIKE LOWER(?) OR LOWER(p.title) LIKE LOWER(?))";
       params.push(`%${location}%`, `%${location}%`);
     }
 
     if (startDate && endDate) {
-      query += " AND available_from <= ? AND available_to >= ?";
-      params.push(startDate, endDate);
+      query += ` AND NOT EXISTS (
+                   SELECT 1 FROM bookings b2 
+                   WHERE b2.property_id = p.id 
+                   AND b2.status = 'ACCEPTED'
+                   AND (
+                     (? BETWEEN b2.start_date AND b2.end_date) OR
+                     (? BETWEEN b2.start_date AND b2.end_date) OR
+                     (b2.start_date BETWEEN ? AND ?) OR
+                     (b2.end_date BETWEEN ? AND ?)
+                   )
+                 )`;
+      params.push(
+        startDate,
+        endDate,
+        startDate, endDate,
+        startDate, endDate
+      );
     }
 
     const [rows] = await db.query(query, params);
