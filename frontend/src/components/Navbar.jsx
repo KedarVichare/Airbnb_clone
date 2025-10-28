@@ -196,6 +196,9 @@ export default function DashboardNavbar() {
                         <Link to="/owner/dashboard">Dashboard</Link>
                       </li>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                        <Link to="/owner/profile">Profile</Link>
+                      </li>
+                      <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
                         <Link to="/owner/properties">My Properties</Link>
                       </li>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">

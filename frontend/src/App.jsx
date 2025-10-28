@@ -9,6 +9,7 @@ import OwnerDashboard from "./pages/OwnerDashboard";
 import OwnerMyProperties from "./pages/OwnerMyProperties";
 import OwnerAddProperty from "./pages/OwnerAddProperty";
 import OwnerBookings from "./pages/OwnerBookings";
+import OwnerProfile from "./pages/OwnerProfile";
 import PropertyDetail from "./pages/PropertyDetail";
 import Favourites from "./pages/Favourites";
 import Profile from "./pages/Profile";
@@ -63,6 +64,7 @@ function AppRoutes() {
       <Route path="/owner/properties" element={OwnerRoute({ element: <OwnerMyProperties /> })} />
       <Route path="/owner/properties/new" element={OwnerRoute({ element: <OwnerAddProperty /> })} />
       <Route path="/owner/bookings" element={OwnerRoute({ element: <OwnerBookings /> })} />
+  <Route path="/owner/profile" element={OwnerRoute({ element: <OwnerProfile /> })} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />
