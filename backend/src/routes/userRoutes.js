@@ -23,13 +23,13 @@ router.put("/update", async (req, res) => {
     const userId = req.session.user?.id;
     if (!userId) return res.status(401).json({ message: "Not logged in" });
 
-    const { name, email, phone, about, city, state, country, languages, gender } = req.body;
+    const { name, email, phone, about, location, city, state, country, languages, gender } = req.body;
 
     await db.query(
       `UPDATE users 
-       SET name=?, email=?, phone=?, about=?, city=?, state=?, country=?, languages=?, gender=? 
+       SET name=?, email=?, phone=?, about=?, location=?, city=?, state=?, country=?, languages=?, gender=? 
        WHERE id=?`,
-      [name, email, phone, about, city, state, country, languages, gender, userId]
+      [name, email, phone, about, location, city, state, country, languages, gender, userId]
     );
 
     res.json({ message: "Profile updated successfully" });
