@@ -144,24 +144,37 @@ exports.acceptBooking = async (req, res) => {
 
 exports.cancelBooking = async (req, res) => {
   try {
-    const ownerId = req.session.user?.id;
+    const userId = req.session.user?.id;
     const userRole = req.session.user?.role;
     const { id } = req.params;
 
-    if (!ownerId || userRole !== "owner") {
-      return res.status(401).json({ message: "Not authorized. Owner only." });
+    if (!userId || !['owner', 'traveler'].includes(userRole)) {
+      return res.status(401).json({ message: "Not authorized." });
     }
 
-    const [check] = await db.query(
-      `SELECT b.*, p.owner_id 
-         FROM bookings b
-         JOIN properties p ON p.id = b.property_id
-        WHERE b.id = ? AND p.owner_id = ?`,
-      [id, ownerId]
-    );
+    let query, params;
+    if (userRole === 'owner') {
+      query = `SELECT b.*, p.owner_id 
+               FROM bookings b
+               JOIN properties p ON p.id = b.property_id
+               WHERE b.id = ? AND p.owner_id = ?`;
+      params = [id, userId];
+    } else {
+      query = `SELECT b.* 
+               FROM bookings b
+               WHERE b.id = ? AND b.traveler_id = ?`;
+      params = [id, userId];
+    }
+
+    const [check] = await db.query(query, params);
 
     if (check.length === 0) {
-      return res.status(403).json({ message: "You are not the owner of this booking." });
+      return res.status(403).json({ message: "You are not authorized to cancel this booking." });
+    }
+
+    // Don't allow cancellation if the booking is already cancelled
+    if (check[0].status === 'CANCELLED') {
+      return res.status(400).json({ message: "This booking is already cancelled." });
     }
 
     const updated = await Booking.updateStatus(id, "CANCELLED");
