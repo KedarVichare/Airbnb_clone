@@ -16,7 +16,7 @@ export default function Signup({ redirectTo }) {
     try {
       const res = await AuthService.signup(role, formData);
       console.log("Signup success:", res.data);
-      navigate(redirectTo || "/login"); // ✅ Redirect to login after signup
+      navigate(redirectTo || "/login"); 
     } catch (err) {
       console.error("Signup error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Signup failed. Try again.");

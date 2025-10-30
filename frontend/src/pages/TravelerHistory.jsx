@@ -17,7 +17,6 @@ const TravelerHistory = () => {
         { withCredentials: true }
       );
       
-      // Update the booking status in the state
       setBookings(bookings.map(booking => 
         booking.id === bookingId 
           ? { ...booking, status: 'CANCELLED' }
@@ -106,7 +105,7 @@ const TravelerHistory = () => {
                     </span>
                   </p>
                   
-                    {booking.status !== "CANCELLED" && (
+                    {booking.status !== "CANCELLED" && booking.status !== "ACCEPTED" && (
                       <button
                         onClick={() => handleCancel(booking.id)}
                         disabled={cancellingId === booking.id}

@@ -27,7 +27,12 @@ const Profile = () => {
     axios
       .get("http://localhost:5000/api/users/me", { withCredentials: true })
       .then((res) => {
-        if (res.data) setProfile(res.data);
+        if (res.data) {
+          setProfile({
+            ...res.data,
+            profilePic: res.data.profile_image || null
+          });
+        }
       })
       .catch((err) => {
         console.error("Failed to fetch profile:", err);
@@ -46,10 +51,22 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const formData = new FormData();
+      Object.keys(profile).forEach(key => {
+        if (key === 'profilePic' && profile[key] instanceof File) {
+          formData.append('profile_image', profile[key]);
+        } else if (profile[key] !== null) {
+          formData.append(key, profile[key]);
+        }
+      });
+
       await axios.put(
         "http://localhost:5000/api/users/update",
-        profile,
-        { withCredentials: true }
+        formData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
       );
   
       setMessage("Profile updated successfully!");
@@ -71,13 +88,12 @@ const Profile = () => {
           className="bg-white p-6 rounded-lg shadow-md space-y-4"
           encType="multipart/form-data"
         >
-          {/* Profile Pic */}
           <div className="flex flex-col items-center">
             {profile.profilePic ? (
               <img
                 src={
                   typeof profile.profilePic === "string"
-                    ? profile.profilePic
+                    ? `http://localhost:5000${profile.profilePic}`
                     : URL.createObjectURL(profile.profilePic)
                 }
                 alt="Profile"

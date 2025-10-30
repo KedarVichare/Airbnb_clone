@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function BookingModal({ propertyId, nextAvailableDate, onClose }) {
+export default function BookingModal({ propertyId, nextAvailableDate, onClose, price }) {
   const [formData, setFormData] = useState({
     start_date: "",
     end_date: "",
@@ -10,8 +10,8 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [minDate, setMinDate] = useState("");
+  const [total, setTotal] = useState(0);
 
-  // Set minimum date to next available date from prop or tomorrow
   useEffect(() => {
     const minDateValue = nextAvailableDate || (() => {
       const tomorrow = new Date();
@@ -21,14 +21,29 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
     setMinDate(minDateValue);
   }, [nextAvailableDate]);
 
+  const calculateTotal = (data) => {
+    const { start_date, end_date, guests } = data;
+    if (!start_date || !end_date || !guests || !price) return 0;
+
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    return price * guests * nights;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const newFormData = { ...formData };
     
     if (name === 'start_date' && formData.end_date && value >= formData.end_date) {
-      setFormData({ ...formData, [name]: value, end_date: "" });
+      newFormData[name] = value;
+      newFormData.end_date = "";
     } else {
-      setFormData({ ...formData, [name]: value });
+      newFormData[name] = value;
     }
+    
+    setFormData(newFormData);
+    setTotal(calculateTotal(newFormData));
   };
 
   const handleSubmit = async (e) => {
@@ -126,6 +141,31 @@ export default function BookingModal({ propertyId, nextAvailableDate, onClose })
               required
             />
           </div>
+
+          {total > 0 && (
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Base price per guest:</span>
+                <span className="font-semibold">${price}</span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-gray-600">Total guests:</span>
+                <span className="font-semibold">{formData.guests}</span>
+              </div>
+              {formData.start_date && formData.end_date && (
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-gray-600">Number of nights:</span>
+                  <span className="font-semibold">
+                    {Math.ceil((new Date(formData.end_date) - new Date(formData.start_date)) / (1000 * 60 * 60 * 24))}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center mt-2 text-lg font-bold border-t pt-2">
+                <span>Total:</span>
+                <span>${total}</span>
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

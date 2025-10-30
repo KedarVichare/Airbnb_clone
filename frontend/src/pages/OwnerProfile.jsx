@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// OwnerProfile: simplified to only include Name, Location, Contact (email/phone) and Images as requested
 const OwnerProfile = () => {
   const [profile, setProfile] = useState({
     name: "",
@@ -52,7 +51,6 @@ const OwnerProfile = () => {
     e.preventDefault();
 
     try {
-      // If a file is selected, send as FormData, otherwise send JSON
       if (profile.profilePic && typeof profile.profilePic !== "string") {
         const fd = new FormData();
         fd.append("name", profile.name);
@@ -100,7 +98,7 @@ const OwnerProfile = () => {
           <div className="flex flex-col items-center">
             {preview ? (
               <img
-                src={preview}
+                src={preview.startsWith('http') ? preview : `http://localhost:5000${preview}`}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover mb-2"
               />
