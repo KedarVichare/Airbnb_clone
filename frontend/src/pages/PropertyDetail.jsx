@@ -117,6 +117,7 @@ const PropertyDetail = () => {
             propertyId={property.id} 
             nextAvailableDate={property.next_available_date}
             onClose={() => setShowModal(false)} 
+            price={property.price}
           />
         )}
       </div>

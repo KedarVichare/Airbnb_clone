@@ -50,6 +50,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads/profiles", express.static(path.join(__dirname, "uploads", "profiles")));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

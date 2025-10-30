@@ -172,7 +172,6 @@ exports.cancelBooking = async (req, res) => {
       return res.status(403).json({ message: "You are not authorized to cancel this booking." });
     }
 
-    // Don't allow cancellation if the booking is already cancelled
     if (check[0].status === 'CANCELLED') {
       return res.status(400).json({ message: "This booking is already cancelled." });
     }
